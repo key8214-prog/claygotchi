@@ -3,16 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Claygotchi</title>
-<meta name="description" content="기물마다 건조 상태를 추정하고 굽깎기 적정 구간을 알려주는 도예 관리 앱">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Claygotchi">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#FBF8F1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1E1C1A" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<meta name="description" content="기물마다 건조 상태를 추정하고 굽깎기 적정 구간을 알려주는 도예 관리 앱">
+<meta name="theme-color" content="#FBF8F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E1C1A" media="(prefers-color-scheme: dark)">
 <style>
 html,body{margin:0}
 img{max-width:100%}
@@ -23,7 +23,7 @@ img{max-width:100%}
   --terracotta:#B95E3A; --terracotta-soft:#F3DCCF; --sage:#6F8F6B; --sage-soft:#DCE6D6;
   --charcoal:#2D2A27; --muted:#7A7066; --line:#E5DACA; --urgent:#DB7428; --urgent-soft:#FBE3CF;
   --water:#5F8AA0; --water-soft:#DCE8EE; --unk:#8C8378; --unk-soft:#ECE6DD;
-  --clay-wet:#7F533E; --clay-mid:#9E6C50; --clay-mid2:#B4825F; --clay-leather:#C99B76; --clay-dry:#CFC8BE; --clay-unk:#B6A898;
+  --clay-wet:#7F533E; --clay-mid:#9E6C50; --clay-mid2:#B4825F; --clay-leather:#C99B76; --clay-dry:#CFC8BE; --clay-unk:#B6A898; --clay-bisque:#EBD8C8; --glaze:#7FA79B; --glaze-done:#5E9488;
   --rim:rgba(0,0,0,.14); --face:#2D2A27; --blush:#E79A86; --shadow:rgba(60,40,20,.12); --glow:rgba(255,226,160,.55);
   --f-display:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
   --f-body:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
@@ -65,6 +65,69 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .check input{width:18px;height:18px}
 .acct-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .acct-list .btn{justify-content:flex-start;padding:12px 14px;border-radius:14px;width:100%}
+.bbar{display:flex;gap:6px;overflow-x:auto;margin:-4px 0 14px;padding-bottom:2px;scrollbar-width:none}
+.bbar::-webkit-scrollbar{display:none}
+.bchip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px}
+.bchip[aria-pressed="true"]{background:var(--charcoal);color:var(--ivory);border-color:var(--charcoal)}
+.bchip.add{border-style:dashed;color:var(--muted)}
+.bpanel{display:flex;flex-direction:column;gap:10px}
+.bpanel .faces{display:flex;gap:4px;flex-wrap:wrap}
+.bpanel .faces .ch-wrap{width:40px;border-radius:10px}
+.steps{font-size:13.5px;padding-left:20px;margin:6px 0;display:flex;flex-direction:column;gap:4px}
+#w-code{word-break:break-all;font-family:var(--f-mono);font-size:11px}
+.quickq{grid-column:1/3;display:flex;flex-direction:column;gap:6px;margin-top:6px;padding:10px;border-radius:14px;background:var(--beige)}
+.quickq.ask{background:var(--terracotta-soft);box-shadow:inset 0 0 0 1.5px var(--terracotta)}
+.qq-h{font-size:13px;font-weight:600}
+.card .acts.quick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;align-items:stretch;margin:0}
+.qbtn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:4px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;line-height:1.15;min-height:46px;min-width:0}
+.qbtn small{font-size:10px;color:var(--muted);white-space:nowrap}
+.qbtn[aria-pressed="true"]{border-color:var(--terracotta);background:var(--terracotta-soft)}
+.ci-list{display:flex;flex-direction:column;gap:10px}
+.ci-row{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.ci-row.picked{border-color:var(--terracotta)}
+.ci-top{display:flex;gap:10px;align-items:center;min-width:0}
+.ci-top .ch-wrap{width:44px;flex:none;border-radius:12px}
+.ci-btns{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+.ci-store{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 11px;font-size:13px}
+.chipbtn[aria-pressed="true"]{background:var(--charcoal);color:var(--ivory);border-color:var(--charcoal)}
+.ci-foot{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;padding:10px;background:var(--beige);border-radius:18px;margin-top:12px;z-index:5}
+.ci-foot .btn{flex:1;justify-content:center}
+details.more{margin-top:14px;border-top:1px dashed var(--line)}
+details.more summary{cursor:pointer;font-size:14px;font-weight:600;padding:12px 0 2px;color:var(--terracotta);list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+.toast-btn{border:0;background:none;color:inherit;text-decoration:underline;font:inherit;font-weight:600;margin-left:8px;padding:0}
+.tgtrow{position:relative;height:30px;margin-top:8px}
+.tgtpill{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;font-size:12px;font-weight:700;color:#fff;background:var(--terracotta);padding:3px 10px;border-radius:999px}
+.tgtstem{position:absolute;top:22px;bottom:0;width:2px;margin-left:-1px;background:var(--terracotta)}
+.wtxt{font-size:12.5px;color:var(--charcoal)}
+.wtxt b{font-weight:600}
+.axis{position:relative;height:14px;font-size:10px;color:var(--muted);margin:0 0 2px}
+.axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.axis .tgt{color:var(--terracotta);font-weight:600}
+.opt2{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px dashed var(--line)}
+.opt2.best{background:linear-gradient(90deg,var(--sage-soft),transparent);margin:0 -12px;padding:10px 12px;border-radius:12px;border-top-color:transparent}
+.opt2-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}
+.opt2-h b{font-weight:600}
+.opt2 .sub{font-size:12px;color:var(--muted)}
+.jtxt{font-size:12.5px;font-weight:600;margin-left:auto;white-space:nowrap}
+.j-good{color:var(--sage)} .j-maybe{color:var(--terracotta)} .j-off{color:var(--muted);font-weight:500}
+.track{position:relative;height:16px;border-radius:8px;background:var(--beige)}
+.track .dl{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.track .ob{position:absolute;top:0;bottom:0;border-radius:8px;background:var(--sage);opacity:.3}
+.track .ob.open{border-radius:8px 0 0 8px;background:linear-gradient(90deg,var(--sage) 60%,transparent)}
+.track .ib{position:absolute;top:3px;bottom:3px;border-radius:5px;background:var(--sage)}
+.track .tl{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--terracotta);border-radius:1px}
+.track-na{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10.5px;color:var(--muted);white-space:nowrap}
+.track-na.right{left:auto;right:8px}
+.legend2{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend2 i{display:inline-block;vertical-align:middle;margin-right:5px}
+.lg-ib{width:18px;height:8px;border-radius:4px;background:var(--sage)}
+.lg-ob{width:18px;height:12px;border-radius:6px;background:var(--sage);opacity:.3}
+.lg-tl{width:2px;height:14px;background:var(--terracotta)}
+.slot-row .jtxt{margin-left:0}
+.envline{font-size:13px;line-height:1.5}
+.envline .linkbtn{font-size:13px}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance}
@@ -124,6 +187,18 @@ h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance
 .st-OVERDRIED{--tone:var(--unk);--tone-soft:var(--unk-soft)}
 .st-UNKNOWN{--tone:var(--unk);--tone-soft:var(--unk-soft)}
 .st-TRIMMED{--tone:var(--sage);--tone-soft:var(--sage-soft)}
+.st-BISQUE{--tone:var(--terracotta);--tone-soft:var(--beige)}
+.st-GLAZED{--tone:var(--sage);--tone-soft:var(--sage-soft)}
+.st-DONE{--tone:var(--terracotta);--tone-soft:var(--terracotta-soft)}
+.vrow{display:grid;grid-template-columns:64px 1fr;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.vrow .times{display:flex;align-items:center;gap:6px;min-width:0}
+.vrow .times input{padding:7px 8px;min-width:0}
+.vchips{display:flex;flex-wrap:wrap;gap:6px}
+.slot{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.slot.good{border-color:var(--terracotta);box-shadow:0 0 0 3px var(--terracotta-soft)}
+.slot-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.slot-row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;font-size:13.5px;padding-top:6px;border-top:1px dashed var(--line)}
+.slot-row .nm{min-width:0;overflow-wrap:anywhere}
 .card.st-URGENT{border-color:var(--urgent);box-shadow:0 0 0 3px var(--urgent-soft)}
 .card.st-READY{border-color:var(--terracotta)}
 .ch-wrap{border-radius:16px;background:var(--tone-soft);display:grid;place-items:center;aspect-ratio:1;max-width:100%}
@@ -139,7 +214,11 @@ h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance
 .tabbar .in{max-width:460px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .tab{border:0;background:transparent;border-radius:14px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:12px;color:var(--muted)}
 .tab .ic{font-size:18px;line-height:1}
-.tab[aria-current="page"]{background:var(--beige);color:var(--charcoal);font-weight:500}
+.tab{position:relative}
+.tab .ic{filter:grayscale(1);opacity:.5;transition:opacity .2s}
+.tab[aria-current="page"]{background:var(--terracotta-soft);color:var(--terracotta);font-weight:700}
+.tab[aria-current="page"] .ic{filter:none;opacity:1}
+.tab[aria-current="page"]::before{content:"";position:absolute;top:-8px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--terracotta)}
 
 /* detail */
 .detail-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -181,8 +260,12 @@ h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance
 .sheet h2{font-size:21px;margin-bottom:4px}
 .field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
 .field>label,.field>.lab{font-size:13px;font-weight:500}
-input[type=text],input[type=password],input[type=number],input[type=datetime-local],select,textarea{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--charcoal);border-radius:12px;padding:10px 12px;width:100%}
+input[type=text],input[type=password],input[type=number],input[type=datetime-local],input[type=time],select,textarea{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--charcoal);border-radius:12px;padding:10px 12px;width:100%}
 textarea{min-height:64px;resize:vertical}
+/* iOS Safari gives date/time inputs a fixed intrinsic width and centred text; reset so they fit the column. */
+input[type=datetime-local],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:44px;text-align:left;line-height:1.3}
+input[type=time]{width:auto;flex:1}
+input::-webkit-date-and-time-value{text-align:left;margin:0}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg input{position:absolute;opacity:0;pointer-events:none}
 .seg label{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;font-size:13.5px;cursor:pointer}
@@ -268,6 +351,27 @@ const CLAY = {
   normal:{lab:"일반", p:{lo:-2, mid:0, hi:2}},
   unknown:{lab:"모름", p:{lo:-20, mid:-6, hi:2}}
 };
+/* Clay bodies: each pot stores clayBodyId + clayBodyName + clayType, so predictions and backups
+   stay self-contained even if the clay list changes later. Model behaviour is keyed by clayType. */
+const CLAY_TYPES = {
+  porcelain:{lab:"백자토", win:{lo:.7, mid:.8, hi:.9}, rimFirst:true, ev:"일반 자료: 빨리·고르지 않게 마르고 단단해질수록 부서지기 쉬워 적정 구간이 좁음"},
+  stoneware:{lab:"조합토·분청토", win:{lo:.9, mid:1, hi:1.1}, rimFirst:false, ev:"기준값"},
+  earthenware:{lab:"옹기토·테라코타", win:{lo:.9, mid:1, hi:1.15}, rimFirst:false, ev:"추정"},
+  unknown:{lab:"모름", win:{lo:.7, mid:.95, hi:1.1}, rimFirst:false, ev:"흙을 몰라서 범위를 넓게"}
+};
+const BUILTIN_CLAYS = [{id:"d1", name:"D1 백자토", type:"porcelain", builtin:true}];
+const SIZE = {
+  small:{lab:"작음", sub:"10cm 미만", lo:.8, mid:.9, hi:1},
+  medium:{lab:"보통", sub:"10~20cm", lo:.9, mid:1, hi:1.1},
+  large:{lab:"큼", sub:"20cm 이상", lo:1.05, mid:1.2, hi:1.4},
+  unknown:{lab:"모름", lo:.85, mid:1, hi:1.25}
+};
+const ENV = {
+  normal:{lab:"평소", lo:1, mid:1, hi:1},
+  dry:{lab:"건조함(난방 중)", lo:1.1, mid:1.3, hi:1.6},
+  humid:{lab:"습함(비·장마)", lo:.6, mid:.75, hi:.9}
+};
+const RIM = {same:"비슷해요", drier:"입구가 더 말랐어요", wetter:"입구가 더 축축해요"};
 const THICK = {
   thin:{lab:"얇음", lo:.7, mid:.8, hi:.9},
   normal:{lab:"보통", lo:.9, mid:1, hi:1.1},
@@ -276,7 +380,7 @@ const THICK = {
 };
 /* Thresholds in "open-air hours for normal clay". R1 kept under EXP-003's 36–40h over-dry observation. */
 const R0R = {lo:14, mid:18, hi:24}, R1R = {lo:24, mid:28, hi:34};
-const CONT = {none:"오픈에어", box:"박스", styro:"스티로폼 박스", plastic:"플라스틱 박스", vinyl:"비닐 덮개", unknown:"기록 없음"};
+const CONT = {none:"노출건조", box:"박스", styro:"스티로폼 박스", plastic:"플라스틱 박스", vinyl:"비닐 덮개", unknown:"기록 없음"};
 const SEAL = {partial:"부분 개방", closed:"덮개 닫음", sealed:"완전 밀폐", unknown:"모름"};
 const ORIENT = {up:"바로 놓음", flip:"뒤집음", unknown:"모름"};
 
@@ -309,10 +413,30 @@ const ST = {
   URGENT:{r:4, e:"🚨", msg:"빨리 와서 굽깎아 주세요!", lab:"종료 임박"},
   OVERDRIED:{r:5, e:"🪨", msg:"너무 말랐어요", lab:"과건조"},
   UNKNOWN:{r:-1, e:"❓", msg:"상태를 확인해 주세요", lab:"확인 필요"},
-  TRIMMED:{r:6, e:"🎉", msg:"굽깎기 완료!", lab:"완료"}
+  TRIMMED:{r:6, e:"🎉", msg:"굽깎기 완료!", lab:"굽깎기 완료"},
+  BISQUE:{r:7, e:"🔥", msg:"초벌을 마쳤어요!", lab:"초벌 완료"},
+  GLAZED:{r:8, e:"🎨", msg:"유약 옷을 입었어요", lab:"시유 완료"},
+  DONE:{r:9, e:"🏆", msg:"완성됐어요!", lab:"완성"}
 };
 const RANK2ST = ["WET","DRYING","APPROACHING","READY","URGENT","OVERDRIED"];
-const SORT = {URGENT:0, READY:1, APPROACHING:2, UNKNOWN:3, DRYING:4, WET:5, OVERDRIED:6, TRIMMED:7};
+const SORT = {URGENT:0, READY:1, APPROACHING:2, UNKNOWN:3, DRYING:4, WET:5, OVERDRIED:6, TRIMMED:7, BISQUE:8, GLAZED:9, DONE:10};
+/* Growth stages after drying. Stage = last "stage" event, else "trimmed" after a trim, else "drying". */
+const STAGES = {
+  drying:{lab:"건조 중", e:"💨"},
+  trimmed:{lab:"굽깎기 완료", e:"🎉", next:"bisque", act:"🔥 초벌을 마쳤어요", wait:"초벌"},
+  bisque:{lab:"초벌 완료", e:"🔥", next:"glazed", act:"🎨 시유를 마쳤어요", wait:"시유"},
+  glazed:{lab:"시유 완료", e:"🎨", next:"done", act:"🏆 재벌까지 끝났어요", wait:"재벌"},
+  done:{lab:"완성", e:"🏆"}
+};
+const josa = (w, a, b) => { const c = w.charCodeAt(w.length - 1); return w + (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? a : b); };
+const STAGE_STATE = {trimmed:"TRIMMED", bisque:"BISQUE", glazed:"GLAZED", done:"DONE"};
+const POST = new Set(["TRIMMED", "BISQUE", "GLAZED", "DONE"]);
+function stageOf(p){
+  const ev = (p.events || []).filter(e => e.type === "stage" && STAGES[e.to]).sort((a, b) => a.at - b.at);
+  if(ev.length) return ev[ev.length - 1].to;
+  if(p.status === "trimmed" || (p.events || []).some(e => e.type === "trim")) return "trimmed";
+  return "drying";
+}
 const CONF = {mid:"보통", low:"낮음", vlow:"매우 낮음", none:"예측 불가"};
 
 /* ───────── model ───────── */
@@ -327,8 +451,10 @@ const currentStorage = (p, t = Date.now()) => storages(p).filter(e => e.at <= t)
 
 function scenario(pot, s, now = Date.now()){
   const th = THICK[pot.thick] || THICK.unknown;
-  const tf = pick(th, s, false);
-  const R0 = pick(R0R, s, false) * tf, R1 = pick(R1R, s, false) * tf;
+  const sz = SIZE[pot.size] || SIZE.unknown, ct = CLAY_TYPES[pot.clayType] || CLAY_TYPES.unknown;
+  const tf = pick(th, s, false) * pick(sz, s, false);
+  const r0 = pick(R0R, s, false), r1 = pick(R1R, s, false);
+  const R0 = r0 * tf, R1 = R0 + (r1 - r0) * tf * pick(ct.win, s, false);
   const anchors = observations(pot).filter(o => OBS[o.level] && !OBS[o.level].terminal);
   const last = anchors[anchors.length - 1];
   let anchorT, approx, p0;
@@ -343,7 +469,15 @@ function scenario(pot, s, now = Date.now()){
   let t0 = s === "fast" ? anchorT - approx : s === "slow" ? anchorT + approx : anchorT;
   t0 = Math.min(t0, Math.max(now, anchorT));
   const st = storages(pot);
-  const segs = st.length ? st.map(e => ({t:e.at, rate:pick(rateOf(e), s) / H})) : [{t:pot.formedAt, rate:pick(rateOf(null), s) / H}];
+  /* Rate changes at every storage change and every studio-environment change ("env" events). */
+  const evs = (pot.events || []).filter(e => e.type === "storage" || e.type === "env").sort(byAt);
+  let curSt = null, curEnv = "normal";
+  const segs = [];
+  for(const e of evs){
+    if(e.type === "storage"){ curSt = e; if(e.env) curEnv = e.env; } else if(ENV[e.env]) curEnv = e.env;
+    segs.push({t:e.at, rate:pick(rateOf(curSt), s) * pick(ENV[curEnv] || ENV.normal, s) / H});
+  }
+  if(!segs.length) segs.push({t:pot.formedAt, rate:pick(rateOf(null), s) / H});
   return {R0, R1, t0, p0, segs};
 }
 function cum(sc, T){
@@ -374,7 +508,8 @@ function statesAt(pot, T, now = Date.now()){
 
 function predict(pot, now = Date.now()){
   const obs = observations(pot), lastObs = obs[obs.length - 1] || null;
-  if(pot.status === "trimmed") return {state:"TRIMMED", terminal:true, lastObs};
+  const stg = stageOf(pot);
+  if(stg !== "drying") return {state:STAGE_STATE[stg] || "TRIMMED", terminal:true, lastObs, stage:stg};
   if(lastObs && lastObs.level === "over") return {state:"OVERDRIED", terminal:true, observed:true, lastObs};
   const sc = {}, q = {}, st = {}, tS = {}, tE = {};
   for(const s of SC){
@@ -410,6 +545,27 @@ function fmt(ms, approxH = 0){
   return `${day} ${pad(d.getHours())}:${pad(d.getMinutes())}${approxH > 0 ? " 쯤" : ""}`;
 }
 function fmtShort(ms){ const d = new Date(ms); return `${WD[d.getDay()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+/* Future-facing times: relative day words, predictions rounded to 30 minutes. */
+const dayDiff = (ms, now = Date.now()) => { const a = new Date(now); a.setHours(0, 0, 0, 0); const b = new Date(ms); b.setHours(0, 0, 0, 0); return Math.round((b - a) / DAY); };
+function relDay(ms, now = Date.now()){
+  const d = new Date(ms), dd = dayDiff(ms, now);
+  if(dd === 0) return "오늘";
+  if(dd === 1) return `내일(${WD[d.getDay()]})`;
+  if(dd === 2) return `모레(${WD[d.getDay()]})`;
+  if(dd === -1) return "어제";
+  return `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`;
+}
+function fmtRel(ms, round = true){
+  if(!isFinite(ms)) return "—";
+  const t = round ? Math.round(ms / (30 * 6e4)) * 30 * 6e4 : ms, d = new Date(t);
+  return `${relDay(t)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtRange(a, b){
+  if(!isFinite(a)) return "—";
+  if(!isFinite(b)) return `${fmtRel(a)}부터 오래`;
+  const ra = Math.round(a / 18e5) * 18e5, rb = Math.round(b / 18e5) * 18e5, db = new Date(rb);
+  return dayDiff(ra, rb) === 0 ? `${fmtRel(a)} ~ ${pad(db.getHours())}:${pad(db.getMinutes())}` : `${fmtRel(a)} ~ ${fmtRel(b)}`;
+}
 function dur(ms){
   ms = Math.max(0, ms);
   const d = Math.floor(ms / DAY), h = Math.floor((ms % DAY) / H), m = Math.floor((ms % H) / 6e4);
@@ -419,7 +575,8 @@ function dur(ms){
 }
 function ago(ms, now = Date.now()){ return dur(now - ms) + " 전"; }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const storageLabel = st => !st ? "기록 없음" : st.container === "none" ? "오픈에어" : `${CONT[st.container]} / ${SEAL[st.seal]}${st.orient === "flip" ? " · 뒤집음" : ""}`;
+const storageLabel = st => !st ? "기록 없음" : (st.container === "none" ? "노출건조" : `${CONT[st.container] || "기록 없음"} · ${SEAL[st.seal] || "모름"}${st.orient === "flip" ? " · 뒤집음" : ""}`) + (st.env && st.env !== "normal" && ENV[st.env] ? ` · ${ENV[st.env].lab}` : "");
+const clayLabel = p => p.clayBodyName ? `${p.clayBodyName}` : "흙 모름";
 function toInput(ms){ const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 const fromInput = v => new Date(v).getTime();
 const uid = () => "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -432,13 +589,13 @@ const BODY = {
   vase:{d:"M50 22 h20 v8 q0 6 6 12 q16 14 16 32 q0 24 -32 24 q-32 0 -32 -24 q0 -18 16 -32 q6 -6 6 -12z", rim:[60,22,10,3], fy:76},
   other:{d:"M60 36 c26 0 36 20 36 37 c0 17 -14 25 -36 25 c-22 0 -36 -8 -36 -25 c0 -17 10 -37 36 -37z", fy:70}
 };
-const FILL = {WET:"var(--clay-wet)", DRYING:"var(--clay-mid)", APPROACHING:"var(--clay-mid2)", READY:"var(--clay-leather)", URGENT:"var(--clay-leather)", OVERDRIED:"var(--clay-dry)", UNKNOWN:"var(--clay-unk)", TRIMMED:"var(--clay-leather)"};
+const FILL = {WET:"var(--clay-wet)", DRYING:"var(--clay-mid)", APPROACHING:"var(--clay-mid2)", READY:"var(--clay-leather)", URGENT:"var(--clay-leather)", OVERDRIED:"var(--clay-dry)", UNKNOWN:"var(--clay-unk)", TRIMMED:"var(--clay-leather)", BISQUE:"var(--clay-bisque)", GLAZED:"var(--glaze)", DONE:"var(--glaze-done)"};
 function sparkle(x, y, s, delay){ return `<path class="tw" style="animation-delay:${delay}s" d="M${x} ${y-s} L${x+s*.3} ${y-s*.3} L${x+s} ${y} L${x+s*.3} ${y+s*.3} L${x} ${y+s} L${x-s*.3} ${y+s*.3} L${x-s} ${y} L${x-s*.3} ${y-s*.3}Z" fill="var(--terracotta)"/>`; }
 function potSVG(kind, state, opt = {}){
   const b = BODY[kind] || BODY.other, f = FILL[state] || FILL.UNKNOWN;
   const fy = b.fy, ex = kind === "plate" ? 7 : 9, ey = fy - 4, my = fy + 6;
   const ink = "var(--face)";
-  const sleepy = opt.paused && !["TRIMMED","OVERDRIED"].includes(state);
+  const sleepy = opt.paused && !["TRIMMED","OVERDRIED","BISQUE","GLAZED","DONE"].includes(state);
   let eyes = "", mouth = "", fx = "", cheeks = "", under = "";
   const dotEyes = r => `<circle cx="${60-ex}" cy="${ey}" r="${r}" fill="${ink}"/><circle cx="${60+ex}" cy="${ey}" r="${r}" fill="${ink}"/>`;
   const happyEyes = `<path d="M${60-ex-4} ${ey+1} q4 -5 8 0 M${60+ex-4} ${ey+1} q4 -5 8 0" stroke="${ink}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
@@ -477,6 +634,21 @@ function potSVG(kind, state, opt = {}){
       under = "";
       fx = `<g>${[[18,30,"var(--terracotta)",20],[30,18,"var(--sage)",-15],[92,16,"var(--urgent)",30],[104,34,"var(--terracotta)",-25],[60,10,"var(--sage)",10]].map(([x,y,c,r]) => `<rect x="${x}" y="${y}" width="5" height="3" rx="1" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join("")}</g>`;
       break;
+    case "BISQUE":
+      eyes = dotEyes(2.6); mouth = smile(5); cheeks = blush;
+      fx = `<g stroke="var(--urgent)" stroke-width="2" stroke-linecap="round" fill="none" opacity=".6"><path class="breeze" d="M96 30 q4 -5 0 -10"/><path class="breeze" style="animation-delay:1s" d="M104 36 q4 -5 0 -10"/><path class="breeze" style="animation-delay:1.8s" d="M18 36 q4 -5 0 -10"/></g>`;
+      break;
+    case "GLAZED":
+      eyes = dotEyes(3) + `<circle cx="${61-ex}" cy="${ey-1}" r=".9" fill="#fff"/><circle cx="${61+ex}" cy="${ey-1}" r=".9" fill="#fff"/>`;
+      mouth = smile(5); cheeks = blush;
+      fx = [[22,40,0],[100,46,1.2]].map(([x,y,dl]) => `<path class="drip" style="animation-delay:${dl}s" d="M${x} ${y} q-4 6 0 9 q4 -3 0 -9z" fill="var(--glaze)"/>`).join("");
+      break;
+    case "DONE":
+      eyes = happyEyes; mouth = smile(7); cheeks = blush;
+      under = `<circle cx="60" cy="${fy-2}" r="52" fill="var(--glow)"/>`;
+      fx = sparkle(100, 26, 6, 0) + sparkle(18, 34, 4.5, .7) + sparkle(106, 64, 3.5, 1.4)
+        + `<path d="M50 10 l4 6 l6 -8 l6 8 l4 -6 l-2 12 h-16z" fill="var(--terracotta)" opacity=".9"/>`;
+      break;
     default:
       eyes = dotEyes(2.6); mouth = `<path d="M56 ${my+1} h8" stroke="${ink}" stroke-width="2.2" stroke-linecap="round"/>`;
       fx = `<g><circle cx="99" cy="28" r="12" fill="var(--card)" stroke="var(--unk)" stroke-width="1.5"/><text x="99" y="33.5" text-anchor="middle" font-size="15" font-family="var(--f-display)" fill="var(--unk)">?</text></g>`;
@@ -486,19 +658,50 @@ function potSVG(kind, state, opt = {}){
     fx += `<g fill="var(--water)" font-family="var(--f-display)"><text class="zz" x="88" y="34" font-size="13">z</text><text class="zz" style="animation-delay:1.4s" x="96" y="24" font-size="10">z</text></g>`;
   }
   const rim = b.rim ? `<ellipse cx="${b.rim[0]}" cy="${b.rim[1]}" rx="${b.rim[2]}" ry="${b.rim[3]}" fill="var(--rim)"/>` : "";
-  const foot = state === "TRIMMED" ? `<path d="M46 99 h28" stroke="var(--rim)" stroke-width="3" stroke-linecap="round"/>` : "";
+  const foot = POST.has(state) ? `<path d="M46 99 h28" stroke="var(--rim)" stroke-width="3" stroke-linecap="round"/>` : "";
+  const shine = state === "DONE" || state === "GLAZED" ? `<ellipse cx="${60-ex-12}" cy="${fy-8}" rx="3.2" ry="8" fill="#fff" opacity="${state === "DONE" ? .55 : .25}" transform="rotate(18 ${60-ex-12} ${fy-8})"/>` : "";
   const bodyCls = state === "URGENT" ? "wob" : (opt.still ? "" : "bob");
   return `<svg class="pot" viewBox="0 0 120 120" width="100%" role="img" aria-label="${esc(KIND[kind] || "기물")} 캐릭터, ${ST[state] ? ST[state].lab : ""}${sleepy ? ", 밀폐 보관 중" : ""}">
     ${under}<ellipse cx="60" cy="102" rx="36" ry="4" fill="var(--shadow)"/>
-    <g class="${bodyCls}">${b.extra ? b.extra(f) : ""}<path d="${b.d}" fill="${f}"/>${rim}${foot}<g>${cheeks}${eyes}${mouth}</g></g>${fx}</svg>`;
+    <g class="${bodyCls}">${b.extra ? b.extra(f) : ""}<path d="${b.d}" fill="${f}"/>${rim}${foot}${shine}<g>${cheeks}${eyes}${mouth}</g></g>${fx}</svg>`;
 }
 
 /* ───────── profiles & storage (on this device only — nothing is sent anywhere) ───────── */
 const USERS_KEY = "claygotchi.users.v1", CUR_KEY = "claygotchi.current.v1";
-let USERS = [], USER = null, POTS = [], MODE = "local", READONLY = false;
+let USERS = [], USER = null, POTS = [], BATCHES = [], MODE = "local", READONLY = false;
+const batchKey = id => "claygotchi.batches." + id;
+const claysKey = id => "claygotchi.clays." + id;
+function userClays(){ const u = USER ? lsGet(claysKey(USER.id), []) : []; return Array.isArray(u) ? u : []; }
+function getClays(){ return BUILTIN_CLAYS.concat(userClays()); }
+function addClay(name, type){
+  const list = userClays(), have = getClays().find(c => c.name === name && c.type === type);
+  if(have) return have;
+  const c = {id:"c" + randHex(5), name, type:CLAY_TYPES[type] ? type : "unknown", createdAt:Date.now()};
+  list.push(c); lsSet(claysKey(USER.id), list); return c;
+}
+function saveBatches(){ if(USER && !lsSet(batchKey(USER.id), BATCHES)) toast("기기 저장 공간이 부족해 저장하지 못했어요."); scheduleSync(); }
+const batchOf = p => p && p.batchId ? BATCHES.find(b => b.id === p.batchId) || null : null;
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
-const lsDel = k => { try { localStorage.removeItem(k); } catch {} };
+const lsSet = (k, v) => { const raw = JSON.stringify(v); let ok = true; try { localStorage.setItem(k, raw); } catch { ok = false; } mirrorSet(k, raw); return ok || !!PREF; };
+const CAP = window.Capacitor;
+const NATIVE = !!(CAP && typeof CAP.isNativePlatform === "function" && CAP.isNativePlatform());
+const nativePlugin = name => { try { return NATIVE ? (typeof CAP.registerPlugin === "function" ? CAP.registerPlugin(name) : (CAP.Plugins || {})[name]) : null; } catch { return null; } };
+const WB = nativePlugin("WidgetBridge"), LN = nativePlugin("LocalNotifications"), PREF = nativePlugin("Preferences");
+/* In the iOS app, every saved key is mirrored to native Preferences, because iOS may clear web storage. */
+const mirrorSet = (k, raw) => { if(PREF) try { PREF.set({key:k, value:raw}).catch(() => {}); } catch {} };
+const mirrorDel = k => { if(PREF) try { PREF.remove({key:k}).catch(() => {}); } catch {} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch {} mirrorDel(k); };
+async function restoreFromNative(){
+  if(!PREF) return;
+  try {
+    const {keys} = await PREF.keys();
+    for(const k of keys || []){
+      if(!k.startsWith("claygotchi.")) continue;
+      let have = null; try { have = localStorage.getItem(k); } catch {}
+      if(have === null){ const {value} = await PREF.get({key:k}); if(value !== null && value !== undefined) try { localStorage.setItem(k, value); } catch {} }
+    }
+  } catch {}
+}
 const potsKey = id => "claygotchi.pots." + id;
 async function hashPin(salt, pin){
   const str = salt + ":" + pin;
@@ -518,17 +721,18 @@ function randHex(n){
 }
 function loadUsers(){ USERS = lsGet(USERS_KEY, []); if(!Array.isArray(USERS)) USERS = []; }
 function signIn(u, keep){
-  USER = u; POTS = lsGet(potsKey(u.id), []);
+  USER = u; POTS = lsGet(potsKey(u.id), []); BATCHES = lsGet(batchKey(u.id), []); if(!Array.isArray(BATCHES)) BATCHES = []; V.batch = null;
   if(keep) lsSet(CUR_KEY, u.id); else lsDel(CUR_KEY);
   V.tab = "studio"; V.detail = null; LV.err = ""; LV.fails = 0;
-  render(); window.scrollTo(0, 0);
+  render(); window.scrollTo(0, 0); scheduleSync();
 }
 function signOut(){
-  USER = null; POTS = []; lsDel(CUR_KEY); closeSheet();
+  nativeClear();
+  USER = null; POTS = []; BATCHES = []; lsDel(CUR_KEY); closeSheet();
   LV.mode = USERS.length ? "pick" : "signup"; LV.err = "";
   render();
 }
-function saveLocal(){ if(USER && !lsSet(potsKey(USER.id), POTS)) toast("기기 저장 공간이 부족해 저장하지 못했어요."); }
+function saveLocal(){ if(USER && !lsSet(potsKey(USER.id), POTS)) toast("기기 저장 공간이 부족해 저장하지 못했어요."); scheduleSync(); }
 async function savePot(p){
   p.updatedAt = Date.now();
   const i = POTS.findIndex(x => x.id === p.id);
@@ -558,33 +762,161 @@ function exp002Pots(){
   ];
 }
 
+/* ───────── quick-entry helpers ───────── */
+const prefsKey = id => "claygotchi.prefs." + id, envKey = id => "claygotchi.env." + id;
+const getPrefs = () => { const v = USER ? lsGet(prefsKey(USER.id), {}) : {}; return v && typeof v === "object" ? v : {}; };
+const getEnv = () => { const v = USER ? lsGet(envKey(USER.id), "normal") : "normal"; return ENV[v] ? v : "normal"; };
+const QUICK = [["soaked","💧","축축해요"],["damp","🌱","조금 축축"],["ready","✨","딱 좋아요"],["firm","🚨","단단해요"],["over","🪨","말랐어요"]];
+const isDrying = p => p.status !== "trimmed" && stageOf(p) === "drying";
+function predSnap(pot, at){ const P = predict(pot, at); return P.st ? {fast:P.st.fast, mid:P.st.mid, slow:P.st.slow, state:P.state, conf:P.conf} : null; }
+function nextAutoName(kind, offset = 0){
+  const lab = KIND[kind] || "기물", re = new RegExp("^" + lab + " (\\d+)$");
+  let max = 0; POTS.forEach(p => { const m = (p.name || "").match(re); if(m) max = Math.max(max, parseInt(m[1], 10)); });
+  return `${lab} ${pad(max + 1 + offset)}`;
+}
+async function setStudioEnv(env){
+  if(!USER || !ENV[env]) return;
+  const prev = getEnv(); lsSet(envKey(USER.id), env);
+  if(prev === env) return;
+  const now = Date.now();
+  POTS.forEach(p => { if(isDrying(p)){ p.events.push({id:uid(), type:"env", at:now, env}); p.updatedAt = now; } });
+  saveLocal(); render();
+}
+
 /* ───────── view state ───────── */
-const V = {tab:"studio", detail:null, sheet:null, data:{}, showDone:false, planT:null, confirmDel:false, delEvent:null};
+const V = {tab:"studio", checkin:null, batch:null, detail:null, sheet:null, data:{}, showDone:false, planT:null, confirmDel:false, delEvent:null};
 const $app = document.getElementById("app"), $sheet = document.getElementById("sheet");
 let toastTimer;
-function toast(msg){
+function toast(msg, action){
   const t = document.getElementById("toast");
-  t.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.innerHTML = "", 2600);
+  t.innerHTML = `<div class="toast" role="status">${esc(msg)}${action ? `<button class="toast-btn" id="toastAct">${esc(action.label)}</button>` : ""}</div>`;
+  if(action) document.getElementById("toastAct").onclick = ev => { ev.stopPropagation(); t.innerHTML = ""; action.fn(); };
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.innerHTML = "", action ? 5000 : 2600);
+}
+
+/* ───────── batches & widget code ───────── */
+function batchSummary(pots, now){
+  const preds = pots.map(p => ({p, P:predict(p, now)}));
+  const act = preds.filter(x => !POST.has(x.P.state));
+  const pool = (act.length ? act : preds).slice().sort((a, b) => SORT[a.P.state] - SORT[b.P.state]);
+  const head = pool[0] ? pool[0].P.state : "UNKNOWN";
+  const cands = act.filter(x => !x.P.terminal && !x.P.paused && x.P.conf !== "none" && isFinite(x.P.tS.mid) && x.P.tE.mid > now).sort((a, b) => a.P.tS.mid - b.P.tS.mid);
+  return {preds, head, next:cands[0] || null, active:act.length};
+}
+/* ───────── iOS app: widget data + local notifications ───────── */
+const visitsKey = id => "claygotchi.visits." + id;
+const getVisits = () => { const v = USER ? lsGet(visitsKey(USER.id), []) : []; return Array.isArray(v) ? v : []; };
+const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
+function upcomingSlots(now, days = 14){
+  const rules = getVisits(), out = [];
+  if(!rules.length) return out;
+  const base = new Date(now); base.setHours(0, 0, 0, 0);
+  for(let d = 0; d <= days; d++){
+    const day = new Date(base); day.setDate(base.getDate() + d);
+    for(const r of rules){
+      if(r.dow !== day.getDay()) continue;
+      const [sh, sm] = r.start.split(":").map(Number), [eh, em] = r.end.split(":").map(Number);
+      const s = new Date(day); s.setHours(sh, sm, 0, 0);
+      const e = new Date(day); e.setHours(eh, em, 0, 0);
+      if(e.getTime() > now) out.push({s:s.getTime(), e:e.getTime(), now:s.getTime() <= now});
+    }
+  }
+  return out.sort((a, b) => a.s - b.s);
+}
+function slotOutlook(pot, s, e, now){
+  const a = statesAt(pot, Math.max(s, now), now), b = statesAt(pot, e, now), ok = x => x === "READY" || x === "URGENT", o = {};
+  for(const k of SC) o[k] = ok(a[k]) ? a[k] : ok(b[k]) ? b[k] : a[k];
+  return o;
+}
+const pinKey = id => "claygotchi.pin." + id, notifyKey = id => "claygotchi.notify." + id;
+const getPin = () => USER ? lsGet(pinKey(USER.id), null) : null;
+const isPinned = (type, id) => { const p = getPin(); return !!p && p.type === type && p.id === id; };
+function setPin(pin){ if(!USER) return; if(pin) lsSet(pinKey(USER.id), pin); else lsDel(pinKey(USER.id)); scheduleSync(); render(); }
+let syncTimer = null;
+function scheduleSync(){ if(!NATIVE) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => { syncWidget(); syncNotifications(); }, 400); }
+function widgetTarget(){
+  const pin = getPin();
+  if(pin && pin.type === "pot"){ const p = POTS.find(x => x.id === pin.id); if(p) return {mode:"pot", title:p.name, pots:[p]}; }
+  if(pin && pin.type === "batch"){ const b = BATCHES.find(x => x.id === pin.id), m = POTS.filter(p => p.batchId === pin.id); if(b && m.length) return {mode:"batch", title:b.name, pots:m}; }
+  return {mode:"batch", title:"내 작업실", pots:POTS.filter(p => p.status !== "trimmed")};
+}
+const segState = (segs, t) => { let s = segs.length ? segs[0].st : "UNKNOWN"; for(const x of segs){ if(x.t <= t) s = x.st; else break; } return s; };
+function buildWidgetData(now = Date.now()){
+  const tg = widgetTarget(), STEP = 15 * 6e4, END = now + 3 * DAY;
+  const items = tg.pots.map(p => {
+    const P = predict(p, now), segs = []; let last = null;
+    for(let t = now; t <= END; t += STEP){
+      const st = P.terminal ? P.state : predict(p, t).state;
+      if(st !== last){ segs.push({t, st}); last = st; }
+      if(P.terminal) break;
+    }
+    const paused = !P.terminal && !!P.paused && now < P.tS.mid;
+    const ok = !P.terminal && !paused && P.conf !== "none" && isFinite(P.tS.mid) && isFinite(P.tE.mid);
+    return {name:p.name, kind:p.kind || "other", segs, tS:ok ? P.tS.mid : null, tE:ok ? P.tE.mid : null, conf:P.conf || "none", paused, terminal:!!P.terminal,
+      range:ok ? `${fmt(P.tS.mid)} ~ ${fmtShort(P.tE.mid)}` : null};
+  });
+  const head = []; let lastH = null;
+  for(let t = now; t <= END; t += STEP){
+    const sts = items.map(it => segState(it.segs, t)), act = sts.filter(x => !POST.has(x));
+    const h = (act.length ? act : sts).sort((a, b) => SORT[a] - SORT[b])[0] || "UNKNOWN";
+    if(h !== lastH){ head.push({t, st:h}); lastH = h; }
+  }
+  return {v:1, g:now, mode:tg.mode, title:tg.title, items, head};
+}
+function syncWidget(){
+  if(!WB || !USER) return;
+  try { WB.save({json:JSON.stringify(buildWidgetData())}).catch(() => {}); } catch {}
+}
+async function syncNotifications(){
+  if(!LN || !USER) return;
+  try {
+    const pend = await LN.getPending();
+    if(pend && pend.notifications && pend.notifications.length) await LN.cancel({notifications:pend.notifications.map(n => ({id:n.id}))});
+    if(!lsGet(notifyKey(USER.id), false)) return;
+    const perm = await LN.checkPermissions(); if(!perm || perm.display !== "granted") return;
+    const now = Date.now(), list = [];
+    for(const p of POTS){
+      if(p.status === "trimmed") continue;
+      const P = predict(p, now);
+      if(P.terminal || P.paused || P.conf === "none" || !isFinite(P.tS.mid) || !isFinite(P.tE.mid)) continue;
+      const add = (t, title, body) => { if(t > now + 60000) list.push({t, title, body}); };
+      add(P.tS.mid - 2 * H, `👀 ${p.name}`, `2시간 뒤쯤 굽깎기 적정 구간이 시작될 것 같아요. (예상 · 신뢰도 ${CONF[P.conf]})`);
+      add(P.tS.mid, `✨ ${p.name}`, "지금쯤 굽깎기 좋은 때일 수 있어요. 직접 확인해 보세요. (예상)");
+      add(P.tE.mid - 3 * H, `🚨 ${p.name}`, "3시간 뒤쯤 적정 구간이 끝날 수 있어요. (예상)");
+    }
+    list.sort((a, b) => a.t - b.t);
+    const ns = list.slice(0, 60).map((n, i) => ({id:i + 1, title:n.title, body:n.body, schedule:{at:new Date(n.t), allowWhileIdle:true}}));
+    if(ns.length) await LN.schedule({notifications:ns});
+  } catch {}
+}
+function nativeClear(){
+  if(!NATIVE) return;
+  try { if(WB) WB.clear().catch(() => {}); } catch {}
+  if(LN) LN.getPending().then(p => p && p.notifications && p.notifications.length ? LN.cancel({notifications:p.notifications.map(n => ({id:n.id}))}) : null).catch(() => {});
 }
 
 /* ───────── pieces ───────── */
 function confPill(P){
+  if(P.terminal && P.stage && P.stage !== "drying") return `<span class="pill obs">${STAGES[P.stage].e} ${STAGES[P.stage].lab}</span>`;
   if(P.terminal) return P.state === "TRIMMED" ? `<span class="pill obs">기록 완료</span>` : `<span class="pill obs">직접 확인</span>`;
   if(P.recentObs) return `<span class="pill obs">방금 직접 확인</span>`;
   if(P.paused) return `<span class="pill pred">예상 · 밀폐 보관 중</span>`;
   return `<span class="pill pred">예상 · 신뢰도 <b class="conf-${P.conf}">${CONF[P.conf]}</b></span>`;
 }
 function windowBlock(pot, P, now, big = false){
+  if(P.terminal && P.stage && P.stage !== "drying") return `<div class="win small">${STAGES[P.stage].next ? `다음 단계 <b>${STAGES[P.stage].wait}</b> · ${josa(STAGES[P.stage].wait, "을", "를")} 기다리고 있어요.` : "다 자랐어요. 완성된 기물이에요."}</div>`;
   if(P.terminal) return P.state === "TRIMMED" ? `<div class="win muted small">굽깎기를 마쳤어요.</div>` : `<div class="win muted small">직접 확인한 과건조 상태예요. 굽깎기 적정 구간이 지났어요.</div>`;
   if(P.paused && now < P.tS.mid){
     const alt = predict(whatIf(pot, [{at:now, container:"none", seal:"partial", orient:"unknown"}]), now);
     const a = alt.tS.fast - now, b = alt.tS.slow - now;
     return `<div class="paused"><b>💤 밀폐 보관 중이라 건조가 거의 멈춰 있어요.</b><br>
-      <span class="small">지금 꺼내 오픈에어로 두면 ${a <= 0 ? "빠른 경우 이미 적정일 수 있고" : `빠르면 <span class="mono">${dur(a)}</span>`}, 늦으면 <span class="mono">${isFinite(b) ? dur(b) : "?"}</span> 뒤 적정 구간에 들어설 것으로 봐요.</span></div>`;
+      <span class="small">지금 꺼내서 노출건조하면 ${a <= 0 ? "빠른 경우 이미 적정일 수 있고" : `빠르면 <span class="mono">${dur(a)}</span>`}, 늦으면 <span class="mono">${isFinite(b) ? dur(b) : "?"}</span> 뒤 적정 구간에 들어설 것으로 봐요.</span></div>`;
+  }
+  if(P.paused && now >= P.tS.mid){
+    return `<div class="paused"><b>💤 적정 무렵에 밀폐 보관 중이에요.</b><br><span class="small">밀폐 상태에서는 거의 마르지 않아서 상태가 오래 유지될 것으로 봐요(EXP-004). 꺼내면 다시 마르기 시작해요.</span></div>`;
   }
   if(P.conf === "none"){
-    const early = isFinite(P.tS.fast) && P.tS.fast > now ? `<br><span class="xs">가장 빠른 경우 ${fmt(P.tS.fast)}쯤부터 가능성이 있어요.</span>` : "";
+    const early = isFinite(P.tS.fast) && P.tS.fast > now ? `<br><span class="xs">빠르면 ${fmtRel(P.tS.fast)}부터 깎을 수 있을지도 몰라요.</span>` : "";
     return `<div class="nodata">아직 데이터가 부족해서 굽깎기 시간을 예측할 수 없어요.${early}</div>`;
   }
   const s = P.tS.mid, e = P.tE.mid;
@@ -592,9 +924,9 @@ function windowBlock(pot, P, now, big = false){
   if(now < s) cd = `⏳ 예상 시작까지 ${dur(s - now)}`;
   else if(now < e) cd = `⌛ 예상 종료까지 ${dur(e - now)}`;
   else cd = `예상 구간이 ${dur(now - e)} 전에 지났어요`;
-  const range = `${fmt(s)} ~ ${fmt(e)}`;
+  const range = fmtRange(s, e);
   if(big) return `<div class="window-big"><span class="eyebrow">예상 굽깎기 최적 구간</span><span class="range">${range}</span>
-    <span class="countdown">${cd}</span><span class="small muted">빠르면 ${fmt(P.tS.fast)} 시작 · 늦으면 ${fmt(P.tS.slow)} 시작 (시작 시점 차이 약 ${Math.round(P.spreadH)}시간)</span></div>`;
+    <span class="countdown">${cd}</span><span class="small muted">빨리 마르면 ${fmtRel(P.tS.fast)}, 늦게 마르면 ${fmtRel(P.tS.slow)}부터예요.</span></div>`;
   return `<div class="win"><div class="lab">예상 최적 구간</div><div>${range}</div><div class="countdown">${cd}</div></div>`;
 }
 function lastObsText(P, now){
@@ -602,30 +934,37 @@ function lastObsText(P, now){
   const o = P.lastObs;
   return `${o.approxH >= 6 ? fmt(o.at, o.approxH) : ago(o.at, now)} · ${OBS[o.level] ? OBS[o.level].lab : ""}`;
 }
+function stageActs(pot, wrapCls, btnCls){
+  const st = STAGES[stageOf(pot)];
+  if(READONLY || !st || !st.next) return "";
+  return `<div class="${wrapCls}"><button class="${btnCls}" data-act="stage" data-id="${esc(pot.id)}">${st.act}</button></div>`;
+}
 function card(pot, now){
   const P = predict(pot, now);
   const s = P.state;
   return `<article class="card st-${s}" tabindex="0" role="button" data-act="open" data-id="${esc(pot.id)}" aria-label="${esc(pot.name)} 상세 보기">
     <div class="ch"><div class="ch-wrap">${potSVG(pot.kind, s, {paused:P.paused})}</div></div>
     <div class="body">
-      <div class="nm"><b>${esc(pot.name)}</b><span class="xs muted">${KIND[pot.kind] || "기타"}${pot.count ? " · " + pot.count + "개" : ""}</span></div>
+      <div class="nm"><b>${esc(pot.name)}</b><span class="xs muted">${KIND[pot.kind] || "기타"}${pot.count ? " · " + pot.count + "개" : ""}${pot.clayBodyName ? " · " + esc(pot.clayBodyName) : ""}${batchOf(pot) ? " · 📦 " + esc(batchOf(pot).name) : ""}</span></div>
       <div class="msg">${ST[s].e} ${ST[s].msg}</div>
       <div>${confPill(P)}</div>
       ${windowBlock(pot, P, now)}
     </div>
     <div class="meta">
       <div><div class="k">성형 후</div><div class="v mono">${pot.formedApproxH >= 6 ? "약 " : ""}${dur(now - pot.formedAt)}</div></div>
-      <div><div class="k">현재 보관</div><div class="v">${esc(storageLabel(P.cur || currentStorage(pot, now)))}</div></div>
+      <div><div class="k">현재 보관${pot.status === "trimmed" || READONLY ? "" : ` · <button class="linkbtn" data-act="store" data-id="${esc(pot.id)}">바꾸기</button>`}</div><div class="v">${esc(storageLabel(P.cur || currentStorage(pot, now)))}</div></div>
       <div><div class="k">마지막 확인</div><div class="v">${esc(lastObsText(P, now))}</div></div>
     </div>
-    ${pot.status === "trimmed" ? "" : `<div class="acts"><button class="btn sm" data-act="obs" data-id="${esc(pot.id)}">상태 기록하기</button><button class="btn sm" data-act="store" data-id="${esc(pot.id)}">보관 방법 변경</button></div>`}
+    ${pot.status === "trimmed" ? stageActs(pot, "acts", "btn sm terra") : `<div class="quickq ${P.state === "UNKNOWN" ? "ask" : ""}"><div class="qq-h">${P.state === "UNKNOWN" ? "❓ 지금 상태를 알려 주세요. 굽·바닥을 만져 보니…" : "✋ 방금 만져 봤다면, 굽·바닥은 어때요?"}</div><div class="acts quick" role="group" aria-label="굽·바닥 상태 기록">${QUICK.map(([lv, e, l]) => `<button class="qbtn" data-act="quickObs" data-id="${esc(pot.id)}" data-lv="${lv}" aria-label="${l} 기록하기">${e}<small>${l}</small></button>`).join("")}</div></div>`}
   </article>`;
 }
 
 /* ───────── screens ───────── */
 function studio(now){
-  const active = POTS.filter(p => p.status !== "trimmed");
-  const done = POTS.filter(p => p.status === "trimmed");
+  if(V.batch && !BATCHES.some(b => b.id === V.batch)) V.batch = null;
+  const inView = p => !V.batch || p.batchId === V.batch;
+  const active = POTS.filter(p => p.status !== "trimmed" && inView(p));
+  const done = POTS.filter(p => p.status === "trimmed" && inView(p));
   const preds = active.map(p => ({p, P:predict(p, now)}));
   preds.sort((a, b) => (SORT[a.P.state] - SORT[b.P.state]) || ((a.P.tS?.mid ?? Infinity) - (b.P.tS?.mid ?? Infinity)));
   const head = `<header class="top"><div class="brand"><span class="eyebrow">My Pottery Studio · <button class="linkbtn" data-act="account" aria-label="계정 메뉴">${esc(USER ? USER.nick : "")}님 ▾</button></span><h1>Claygotchi</h1><span class="tag">내 기물들은 지금 어떤 상태이고, 언제 가면 될까?</span></div>
@@ -645,14 +984,28 @@ function studio(now){
   preds.forEach(x => { if(x.P.state !== "UNKNOWN") counts[x.P.state] = (counts[x.P.state] || 0) + 1; });
   let nextHtml;
   if(ready.length) nextHtml = `<div class="next"><div style="width:52px">${potSVG(ready[0].p.kind, ready[0].P.state, {still:true})}</div><div><div class="when">지금 적정 구간일 수 있어요</div><div class="small muted">${ready.map(x => esc(x.p.name)).join(", ")} · 출발 전 예상 종료 시각을 확인하세요</div></div></div>`;
-  else if(cands.length){ const c = cands[0]; nextHtml = `<div class="next"><div style="width:52px">${potSVG(c.p.kind, c.P.state, {still:true})}</div><div><div class="eyebrow">가장 빠른 굽깎기 예상</div><div class="when">${fmt(c.P.tS.mid)}</div><div class="small muted">${esc(c.p.name)} · 신뢰도 ${CONF[c.P.conf]}</div></div></div>`; }
+  else if(cands.length){ const c = cands[0]; nextHtml = `<div class="next"><div style="width:52px">${potSVG(c.p.kind, c.P.state, {still:true})}</div><div><div class="eyebrow">가장 빠른 굽깎기 예상</div><div class="when">${fmtRel(c.P.tS.mid)}</div><div class="small muted">${esc(c.p.name)} · 신뢰도 ${CONF[c.P.conf]}</div></div></div>`; }
   else nextHtml = `<div class="small">아직 믿을 만한 굽깎기 예상 시점이 없어요. ${need.length ? `<b>${need.length}개</b> 기물의 실제 상태를 기록하면 예측이 좁혀져요.` : ""}</div>`;
   const chipHtml = Object.keys(counts).sort((a, b) => SORT[a] - SORT[b]).map(k => `<span class="chip st-${k}"><span class="dot" style="background:var(--tone)"></span>${ST[k].lab} ${counts[k]}</span>`).join("");
-  const summary = `<section class="summary" aria-label="작업실 요약"><div class="q">관리 중인 기물 ${active.length}개</div>${nextHtml}<div class="chips">${chipHtml}${need.length ? `<span class="chip">❓ 관찰 필요 ${need.length}</span>` : ""}</div></section>`;
+  const dryingN = POTS.filter(isDrying).length;
+  const summary = `<section class="summary" aria-label="작업실 요약"><div class="q">관리 중인 기물 ${active.length}개</div>${nextHtml}
+    ${dryingN ? `<div><button class="btn primary" data-act="checkin">🏁 작업실 도착 · 한 번에 기록</button></div>` : ""}
+    <div class="envline">🌡️ 작업실 공기: <b>${ENV[getEnv()].lab}</b> <span class="muted">· 마르는 속도 계산에 반영돼요</span> <button class="linkbtn" data-act="envSheet">바꾸기</button></div><div class="chips">${chipHtml}${need.length ? `<span class="chip">❓ 관찰 필요 ${need.length}</span>` : ""}</div></section>`;
   const list = `<div class="list">${preds.map(x => card(x.p, now)).join("")}</div>`;
-  const doneHtml = done.length ? `<div class="section-h"><h2>완료한 기물</h2><button class="btn sm ghost" data-act="toggleDone">${V.showDone ? "접기" : `${done.length}개 보기`}</button></div>${V.showDone ? `<div class="list">${done.map(p => card(p, now)).join("")}</div>` : ""}` : "";
+  const doneHtml = done.length ? `<div class="section-h"><h2>굽깎기 이후 · 자라는 중</h2><button class="btn sm ghost" data-act="toggleDone">${V.showDone ? "접기" : `${done.length}개 보기`}</button></div>${V.showDone ? `<div class="list">${done.map(p => card(p, now)).join("")}</div>` : ""}` : "";
   const modeNote = "";
-  return head + summary + (active.length ? list : `<p class="muted">관리 중인 기물이 없어요.</p>`) + doneHtml + modeNote;
+  const chipsB = [{id:"", name:"전체", n:POTS.length}].concat(BATCHES.map(b => ({id:b.id, name:"📦 " + b.name, n:POTS.filter(p => p.batchId === b.id).length})));
+  const bar = `<div class="bbar" aria-label="묶음 선택">${chipsB.map(b => `<button class="bchip" data-act="pickBatch" data-bid="${esc(b.id)}" aria-pressed="${(V.batch || "") === b.id}">${esc(b.name)} <span class="mono xs">${b.n}</span></button>`).join("")}<button class="bchip add" data-act="newBatch">＋ 묶음</button></div>`;
+  let bpanel = "";
+  if(V.batch){
+    const B = BATCHES.find(b => b.id === V.batch), members = POTS.filter(p => p.batchId === V.batch);
+    const bs = batchSummary(members, now);
+    bpanel = `<section class="panel bpanel st-${bs.head}"><div class="row" style="justify-content:space-between"><h3 style="margin:0">📦 ${esc(B.name)}</h3><span class="xs muted">기물 ${members.length}개</span></div>
+      ${members.length ? `<div class="faces">${bs.preds.map(x => `<div class="ch-wrap st-${x.P.state}" title="${esc(x.p.name)}">${potSVG(x.p.kind, x.P.state, {paused:x.P.paused, still:true})}</div>`).join("")}</div>
+      <div class="small">묶음 대표 상태: <b>${ST[bs.head].e} ${ST[bs.head].lab}</b>${bs.next ? ` · 가장 빠른 예상 ${fmt(bs.next.P.tS.mid)} (${esc(bs.next.p.name)})` : ""}</div>` : `<p class="small muted" style="margin:0">아직 기물이 없어요. ‘이름 바꾸기·기물 고르기’에서 넣어 주세요.</p>`}
+      <div class="row"><button class="btn sm" data-act="pinBatch">${isPinned("batch", V.batch) ? "✓ 위젯에 표시 중 · 해제" : "📱 위젯에 이 묶음 표시"}</button><button class="btn sm ghost" data-act="editBatch">이름 바꾸기·기물 고르기</button></div></section>`;
+  }
+  return head + bar + bpanel + summary + (active.length ? list : `<p class="muted">${V.batch ? "이 묶음에 관리 중인 기물이 없어요." : "관리 중인 기물이 없어요."}</p>`) + doneHtml + modeNote;
 }
 
 function chartSVG(pot, P, now){
@@ -711,11 +1064,13 @@ function detail(now){
   const cur = P.cur || currentStorage(pot, now);
   const evs = (pot.events || []).slice().sort(byAt);
   const firstId = evs[0] && evs[0].id;
-  let rows = `<li><div class="t">${fmt(pot.formedAt, pot.formedApproxH)}</div><div class="rail"><span class="nd"></span></div><div class="tx">🏺 탄생! <span class="sub">${CLAY[pot.clay] ? CLAY[pot.clay].lab : "모름"} 흙 · 두께 ${THICK[pot.thick] ? THICK[pot.thick].lab : "모름"}</span></div><div></div></li>`;
+  let rows = `<li><div class="t">${fmt(pot.formedAt, pot.formedApproxH)}</div><div class="rail"><span class="nd"></span></div><div class="tx">🏺 탄생! <span class="sub">${esc(clayLabel(pot))} · 초기 ${CLAY[pot.clay] ? CLAY[pot.clay].lab : "모름"} · 크기 ${(SIZE[pot.size] || SIZE.unknown).lab} · 두께 ${THICK[pot.thick] ? THICK[pot.thick].lab : "모름"}</span></div><div></div></li>`;
   evs.forEach(e => {
     let tx;
     if(e.type === "storage") tx = `${e.container === "none" ? "🌬️" : "📦"} ${esc(storageLabel(e))}<div class="sub">${e.orient && e.orient !== "unknown" && e.container !== "none" ? ORIENT[e.orient] + " · " : ""}${rateOf(e).ev}</div>`;
-    else if(e.type === "obs") tx = `${OBS[e.level] ? OBS[e.level].e : "📝"} 직접 확인: ${OBS[e.level] ? OBS[e.level].lab : ""}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
+    else if(e.type === "obs") tx = `${OBS[e.level] ? OBS[e.level].e : "📝"} 직접 확인: ${OBS[e.level] ? OBS[e.level].lab : ""}${e.rim && e.rim !== "same" && RIM[e.rim] ? `<div class="sub">${RIM[e.rim]}</div>` : ""}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
+    else if(e.type === "env") tx = `🌡️ 작업실 공기: ${ENV[e.env] ? ENV[e.env].lab : "평소"}<div class="sub">이때부터 마르는 속도 계산에 반영</div>`;
+    else if(e.type === "stage") tx = `${STAGES[e.to] ? STAGES[e.to].e + " " + STAGES[e.to].lab : "단계 변경"}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
     else if(e.type === "trim") tx = `🎉 굽깎기 완료${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
     const del = e.id === firstId || READONLY ? "" : V.delEvent === e.id
       ? `<button class="icon-btn" style="color:var(--urgent)" data-act="delEvConfirm" data-ev="${esc(e.id)}">삭제 확인</button>`
@@ -723,11 +1078,16 @@ function detail(now){
     rows += `<li><div class="t">${fmt(e.at, e.approxH)}</div><div class="rail"><span class="nd"></span></div><div class="tx">${tx}</div><div>${del}</div></li>`;
   });
   if(!P.terminal && !P.paused && P.conf !== "none"){
-    if(P.tS.mid > now) rows += `<li class="future"><div class="t">${fmt(P.tS.mid)}</div><div class="rail"><span class="nd"></span></div><div class="tx">✨ 예상 굽깎기 적정 구간 시작<div class="sub">빠르면 ${fmt(P.tS.fast)} · 늦으면 ${fmt(P.tS.slow)}</div></div><div></div></li>`;
+    if(P.tS.mid > now) rows += `<li class="future"><div class="t">${fmt(P.tS.mid)}</div><div class="rail"><span class="nd"></span></div><div class="tx">✨ 예상 굽깎기 적정 구간 시작<div class="sub">빠르면 ${fmtRel(P.tS.fast)} · 늦으면 ${fmtRel(P.tS.slow)}</div></div><div></div></li>`;
     if(P.tE.mid > now) rows += `<li class="future"><div class="t">${fmt(P.tE.mid)}</div><div class="rail"><span class="nd"></span></div><div class="tx">⚠️ 과건조 위험 증가<div class="sub">이후엔 바닥부터 단단해질 수 있어요</div></div><div></div></li>`;
   } else if(!P.terminal){
     rows += `<li class="future"><div class="t">?</div><div class="rail"><span class="nd"></span></div><div class="tx">❓ 다음 예측은 관찰 기록이 필요해요<div class="sub">${P.paused ? "꺼내는 시점부터 건조가 다시 진행돼요" : "상태를 기록하면 이 자리에 예상 구간이 그려져요"}</div></div><div></div></li>`;
   }
+  const ctype = CLAY_TYPES[pot.clayType] || CLAY_TYPES.unknown;
+  const rimNotes = [];
+  if(!P.terminal && P.lastObs && P.lastObs.rim === "drier") rimNotes.push("지난번 확인 때 입구가 굽보다 더 말라 있었어요. 입구만 비닐로 덮어 두면 고르게 말라요.");
+  else if(!P.terminal && ctype.rimFirst && cur && cur.container === "none") rimNotes.push("백자토는 입구가 먼저 마르는 경우가 많아요(일반 자료). 굽 쪽이 덜 말랐다면 입구만 비닐로 덮어 주세요.");
+  const rimNote = rimNotes.map(t => `<p class="note">${t}</p>`).join("");
   const kindNote = cur && (pot.kind === "cup" || pot.kind === "bowl") && cur.orient !== "flip" && !P.terminal
     ? `<p class="note">바닥이 몸통보다 늦게 마를 수 있어요 (EXP-001). 확인할 때 바닥도 꼭 눌러 보세요.</p>` : "";
   const predTxt = P.terminal ? "—" : P.state === "UNKNOWN" ? `판단 보류 <span class="xs muted">(빠른 경우 ${ST[P.st.fast].lab} ~ 느린 경우 ${ST[P.st.slow].lab})</span>` : `${ST[s].lab}${P.recentObs ? "" : " 가능성"}`;
@@ -743,79 +1103,154 @@ function detail(now){
     <span class="k">마지막 실제 확인</span><span class="v">${P.lastObs ? `${fmt(P.lastObs.at, P.lastObs.approxH)} / ${OBS[P.lastObs.level] ? OBS[P.lastObs.level].lab : ""}` : "아직 없음"}</span>
     <span class="k">예측 신뢰도</span><span class="v">${P.terminal ? "—" : P.paused ? "밀폐 보관 중" : `<b class="conf-${P.conf}">${CONF[P.conf]}</b>`}</span>
     <span class="k">현재 보관</span><span class="v">${esc(storageLabel(cur))}</span>
+    <span class="k">묶음</span><span class="v"><select id="d-batch" aria-label="묶음" style="padding:5px 10px;width:auto;max-width:100%"><option value="">없음</option>${BATCHES.map(b => `<option value="${esc(b.id)}" ${pot.batchId === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}<option value="__new">＋ 새 묶음…</option></select></span>
     <span class="k">성형</span><span class="v">${fmt(pot.formedAt, pot.formedApproxH)} · ${KIND[pot.kind]}${pot.count ? ` ${pot.count}개` : ""}</span>
+    <span class="k">흙</span><span class="v">${esc(clayLabel(pot))}${pot.clayType && CLAY_TYPES[pot.clayType] && pot.clayType !== "unknown" && !(pot.clayBodyName || "").includes(CLAY_TYPES[pot.clayType].lab) ? ` <span class="xs muted">(${CLAY_TYPES[pot.clayType].lab})</span>` : ""} · 초기 ${CLAY[pot.clay] ? CLAY[pot.clay].lab : "모름"}</span>
+    <span class="k">크기·두께</span><span class="v">${(SIZE[pot.size] || SIZE.unknown).lab}${pot.dims ? ` <span class="xs muted">(${[pot.dims.d ? "지름 " + pot.dims.d + "cm" : "", pot.dims.h ? "높이 " + pot.dims.h + "cm" : ""].filter(Boolean).join(" · ")})</span>` : ""} · 두께 ${THICK[pot.thick] ? THICK[pot.thick].lab : "모름"}</span>
   </div>${pot.note ? `<p class="small muted" style="margin:10px 0 0">${esc(pot.note)}</p>` : ""}</section>
-  <section class="panel st-${s}"><h3>굽깎기 최적 시간</h3>${windowBlock(pot, P, now, true)}</section>
+  <section class="panel st-${s}"><h3>${P.stage && P.stage !== "drying" ? "다음 단계" : "굽깎기 최적 시간"}</h3>${windowBlock(pot, P, now, true)}</section>
   ${P.terminal ? "" : `<section class="panel"><h3>건조 진행 예상</h3><div class="chart-wrap">${chartSVG(pot, P, now)}</div>
     <div class="legend"><span><i style="background:var(--terracotta)"></i>중간 예상 (점선은 미래)</span><span><i style="background:var(--terracotta);opacity:.25"></i>빠른~느린 범위</span><span><i style="background:var(--sage-soft)"></i>굽깎기 적정</span><span>● 직접 확인</span></div></section>`}
-  ${kindNote}
+  ${kindNote}${rimNote}
   <section class="panel"><h3>건조 타임라인</h3><ul class="tl">${rows}</ul></section>
-  ${pot.status === "trimmed" || READONLY ? "" : `<div class="sticky-acts"><button class="btn" data-act="obs" data-id="${esc(pot.id)}">상태 기록하기</button><button class="btn" data-act="store" data-id="${esc(pot.id)}">보관 방법 변경</button></div>`}
+  ${pot.status === "trimmed" ? stageActs(pot, "sticky-acts", "btn terra") : READONLY ? "" : `<div class="sticky-acts"><button class="btn" data-act="obs" data-id="${esc(pot.id)}">상태 기록하기</button><button class="btn" data-act="store" data-id="${esc(pot.id)}">보관 방법 변경</button></div>`}
   <div style="margin-top:22px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
-    ${pot.status === "trimmed" ? `<button class="btn sm" data-act="untrim" data-id="${esc(pot.id)}">완료 취소</button>` : ""}
+    <button class="btn sm" data-act="editPot" data-id="${esc(pot.id)}">✏️ 기물 정보 수정</button>
+    <button class="btn sm" data-act="pinPot" data-id="${esc(pot.id)}">${isPinned("pot", pot.id) ? "✓ 위젯에 표시 중 · 해제" : "📱 위젯에 이 기물 표시"}</button>
+    ${pot.status === "trimmed" ? `<button class="btn sm" data-act="untrim" data-id="${esc(pot.id)}">건조 중으로 되돌리기</button>` : ""}
     ${READONLY ? "" : V.confirmDel ? `<div class="confirm-box">이 기물과 모든 기록을 지울까요? 되돌릴 수 없어요.<div class="row" style="margin-top:8px"><button class="btn sm terra" data-act="delPot" data-id="${esc(pot.id)}">지우기</button><button class="btn sm" data-act="cancelDel">취소</button></div></div>` : `<button class="btn sm ghost" style="color:var(--muted)" data-act="askDel">기물 삭제</button>`}
   </div>`;
 }
 
-function verdictOf(o){
-  const ok = x => x === "READY" || x === "URGENT";
-  if(ok(o.fast) && ok(o.mid) && ok(o.slow)) return ["v-good", "모델상 유력"];
-  if(ok(o.mid)) return ["v-maybe", "가능성 있음"];
-  if(ok(o.fast) || ok(o.slow)) return ["v-unsure", "불확실"];
-  return ["v-no", "어려움"];
+/* Planner: each option is drawn as a window bar on a shared time axis, with the target time as a line. */
+function windowsOf(pot, now){
+  const P = predict(pot, now);
+  if(P.terminal || !P.tS) return null;
+  return {fS:P.tS.fast, mS:P.tS.mid, mE:P.tE.mid, sE:P.tE.slow, paused:P.paused};
 }
-function tri(o){ return `<span class="tri" aria-label="빠름 ${ST[o.fast].lab}, 중간 ${ST[o.mid].lab}, 느림 ${ST[o.slow].lab}">${SC.map(s => `<span class="st-${o[s]}" title="${s}">${ST[o[s]].e}</span>`).join("")}</span>`; }
+const JUDGE = {
+  good:{txt:"✨ 깎기 좋아요", cls:"j-good"},
+  maybe:{txt:"👀 좋을 수도 있어요", cls:"j-maybe"},
+  early:{txt:"🌱 아직 축축할 거예요", cls:"j-off"},
+  late:{txt:"🪨 이미 말랐을 거예요", cls:"j-off"},
+  none:{txt:"❓ 아직 예측하기 어려워요", cls:"j-off"}
+};
+function judge(w, a, b = a){
+  if(!w || !isFinite(w.fS)) return "none";
+  const over = (x, y) => a <= y && b >= x;
+  if(isFinite(w.mS) && over(w.mS, isFinite(w.mE) ? w.mE : Infinity)) return "good";
+  if(over(w.fS, isFinite(w.sE) ? w.sE : Infinity)) return "maybe";
+  return b < w.fS ? "early" : "late";
+}
+function axisRange(now, T){ const span = Math.max(T - now, 12 * H); return [now, Math.max(T + Math.max(24 * H, span * .3), now + 40 * H)]; }
+function axisHtml(A, B, T){
+  const pct = t => (t - A) / (B - A) * 100, days = (B - A) / DAY, step = days > 5 ? 2 : 1;
+  const d = new Date(A); d.setHours(24, 0, 0, 0);
+  let h = "", k = 0;
+  for(let t = d.getTime(); t < B; t += DAY, k++){
+    if(k % step) continue;
+    const x = new Date(t), p = pct(t);
+    if(p > 3 && p < 92) h += `<span style="left:${p}%">${x.getMonth()+1}/${x.getDate()}${days <= 4 ? " " + WD[x.getDay()] : ""}</span>`;
+  }
+  const tp = Math.max(0, Math.min(100, pct(T)));
+  return `<div class="tgtrow"><span class="tgtpill" style="left:${Math.max(22, Math.min(78, tp))}%">🎯 ${fmtRel(T, false)}에 간다면</span><i class="tgtstem" style="left:${tp}%"></i></div><div class="axis">${h}</div>`;
+}
+function barHtml(w, A, B, T){
+  const pct = t => Math.max(0, Math.min(100, (t - A) / (B - A) * 100));
+  const grid = (() => { const d = new Date(A); d.setHours(24, 0, 0, 0); let g = ""; for(let t = d.getTime(); t < B; t += DAY) g += `<i class="dl" style="left:${pct(t)}%"></i>`; return g; })();
+  const tline = `<i class="tl" style="left:${pct(T)}%"></i>`;
+  if(!w || !isFinite(w.fS)) return `<div class="track">${grid}<span class="track-na">예측 범위가 너무 넓어요</span>${tline}</div>`;
+  if(w.fS >= B) return `<div class="track">${grid}<span class="track-na right">${fmt(w.mS)} 이후 →</span>${tline}</div>`;
+  const o1 = pct(w.fS), o2 = isFinite(w.sE) ? pct(w.sE) : 100, open = !isFinite(w.sE) || w.sE > B;
+  let inner = "";
+  if(isFinite(w.mS) && w.mS < B){ const i1 = pct(w.mS), i2 = isFinite(w.mE) ? pct(w.mE) : 100; inner = `<i class="ib" style="left:${i1}%;width:${Math.max(1.2, i2 - i1)}%"></i>`; }
+  return `<div class="track">${grid}<i class="ob ${open ? "open" : ""}" style="left:${o1}%;width:${Math.max(1.2, o2 - o1)}%"></i>${inner}${tline}</div>`;
+}
 function planner(now){
-  if(!V.planT){ const d = new Date(now + 2 * DAY); d.setHours(20, 0, 0, 0); V.planT = d.getTime(); }
-  const T = V.planT;
+  const slots = upcomingSlots(now, 14);
+  if(!V.planT){
+    if(slots.length) V.planT = Math.max(slots[0].s, now + 5 * 6e4);
+    else { const d = new Date(now + 2 * DAY); d.setHours(20, 0, 0, 0); V.planT = d.getTime(); }
+  }
+  const T = V.planT, [A, B] = axisRange(now, T);
   const active = POTS.filter(p => p.status !== "trimmed" && !predict(p, now).terminal);
   let items = "";
   for(const pot of active){
     const P = predict(pot, now);
-    const opts = [];
-    const keep = statesAt(pot, T, now); opts.push({nm:"지금 방식 그대로 두기", sub:storageLabel(P.cur), o:keep, visit:false});
+    const opts = [{nm:"지금 그대로 두기", sub:`지금 보관: ${storageLabel(P.cur)}`, pot, visit:false}];
     const cand = [
-      {nm:"지금 오픈에어로 꺼내기", ch:{container:"none", seal:"partial", orient:"unknown"}},
-      {nm:"지금 박스 부분 개방으로", ch:{container:"box", seal:"partial", orient:"flip"}},
-      {nm:"지금 플라스틱 박스 밀폐로", ch:{container:"plastic", seal:"sealed", orient:"flip"}}
+      {nm:"꺼내서 노출건조하기", ch:{container:"none", seal:"partial", orient:"unknown"}},
+      {nm:"박스에 넣고 조금 열어 두기", ch:{container:"box", seal:"partial", orient:"flip"}},
+      {nm:"플라스틱 박스에 밀폐하기", ch:{container:"plastic", seal:"sealed", orient:"flip"}}
     ];
     for(const c of cand){
       if(P.cur && P.cur.container === c.ch.container && P.cur.seal === c.ch.seal) continue;
-      opts.push({nm:c.nm, sub:rateOf(c.ch).ev, o:statesAt(whatIf(pot, [{at:now, ...c.ch}]), T, now), visit:true});
+      opts.push({nm:c.nm, sub:"🏃 지금 작업실에 있을 때만 바꿀 수 있어요", pot:whatIf(pot, [{at:now, ...c.ch}]), visit:true});
     }
-    // two-step: open air until just inside window, then seal
     const open = whatIf(pot, [{at:now, container:"none", seal:"partial", orient:"unknown"}]);
     const scM = scenario(open, "mid", now);
     const X = crossT(scM, scM.R0 + .3 * (scM.R1 - scM.R0));
     if(isFinite(X) && X > now + H && X < T - 2 * H){
-      const two = whatIf(pot, [{at:now, container:"none", seal:"partial", orient:"unknown"}, {at:X, container:"plastic", seal:"sealed", orient:"flip"}]);
-      opts.push({nm:`오픈에어 → ${fmt(X)}에 밀폐`, sub:`적정에 막 들어선 때 밀폐해서 붙잡아 두는 방법. ${fmtShort(X)}에 한 번 더 방문해야 해요.`, o:statesAt(two, T, now), visit:true});
+      opts.push({nm:`말리다가 ${fmtRel(X)}에 밀폐하기`, sub:`🏃 지금 꺼내서 노출건조하다가 ${fmtRel(X)}에 다시 가서 밀폐해요. 깎기 좋은 상태를 붙잡아 두는 방법이에요.`,
+        pot:whatIf(pot, [{at:now, container:"none", seal:"partial", orient:"unknown"}, {at:X, container:"plastic", seal:"sealed", orient:"flip"}]), visit:true});
     }
-    items += `<article class="plan-item st-${P.state}"><div class="plan-head"><div class="ch-wrap">${potSVG(pot.kind, P.state, {paused:P.paused, still:true})}</div><div><b>${esc(pot.name)}</b><div class="xs muted">${ST[P.state].lab} · ${P.paused ? "밀폐 보관 중" : "신뢰도 " + CONF[P.conf]}</div></div></div>
-      ${opts.map(op => { const [vc, vt] = verdictOf(op.o); return `<div class="opt"><div class="nm">${esc(op.nm)}${op.visit ? ` <span class="xs muted">· 지금 방문 필요</span>` : ""}</div><div class="row" style="gap:6px">${tri(op.o)}<span class="verdict ${vc}">${vt}</span></div><div class="sub">${esc(op.sub)}</div></div>`; }).join("")}
+    opts.forEach(op => { op.w = windowsOf(op.pot, now); op.k = judge(op.w, T); });
+    const best = opts.find(o => o.k === "good") || opts.find(o => o.k === "maybe");
+    items += `<article class="plan-item st-${P.state}"><div class="plan-head"><div class="ch-wrap">${potSVG(pot.kind, P.state, {paused:P.paused, still:true})}</div><div><b>${esc(pot.name)}</b><div class="xs muted">${ST[P.state].e} ${ST[P.state].lab} · ${P.paused ? "밀폐 보관 중" : "신뢰도 " + CONF[P.conf]}</div></div></div>
+      ${axisHtml(A, B, T)}
+      ${opts.map(op => `<div class="opt2 ${op === best ? "best" : ""}">
+        <div class="opt2-h"><b>${esc(op.nm)}</b>${op === best ? `<span class="pill obs">추천</span>` : ""}<span class="jtxt ${JUDGE[op.k].cls}">${JUDGE[op.k].txt}</span></div>
+        ${barHtml(op.w, A, B, T)}
+        ${op.w && isFinite(op.w.mS) ? `<div class="wtxt">이 방법이면 깎기 좋은 때 <b>${fmtRange(op.w.mS, op.w.mE)}</b></div>` : ""}
+        <div class="sub">${esc(op.sub)}</div></div>`).join("")}
     </article>`;
   }
-  return `<header class="top"><div class="brand"><span class="eyebrow">목표 시점 역산</span><h1>언제 갈까?</h1><span class="tag">원하는 굽깎기 시간을 고르면 기물별로 맞출 수 있는 보관 방법을 보여줘요.</span></div></header>
+  const rules = getVisits().slice().sort((a, b) => DOW_ORDER.indexOf(a.dow) - DOW_ORDER.indexOf(b.dow) || a.start.localeCompare(b.start));
+  const visitBox = rules.length
+    ? `<div class="vchips">${rules.map(r => `<span class="chip">${WD[r.dow]} ${r.start}–${r.end}</span>`).join("")}</div><div><button class="btn sm" data-act="visits">일정 편집</button></div>`
+    : `<div class="nodata">아직 등록된 방문 가능 시간이 없어요. 매주 갈 수 있는 요일과 시간을 등록하면, 그 시간들 중 언제 가면 좋을지 기물별로 보여줘요.</div><div><button class="btn sm primary" data-act="visits">방문 가능 일정 등록</button></div>`;
+  let slotHtml = "";
+  if(rules.length){
+    const ws = active.map(pot => ({pot, w:windowsOf(pot, now)}));
+    const list = slots.slice(0, 10).map(sl => {
+      const rows = ws.map(({pot, w}) => ({pot, k:judge(w, Math.max(sl.s, now), sl.e)})).sort((a, b) => ["good","maybe","early","late","none"].indexOf(a.k) - ["good","maybe","early","late","none"].indexOf(b.k));
+      const good = rows.filter(r => r.k === "good").length, maybe = rows.filter(r => r.k === "maybe").length;
+      const d = new Date(sl.s);
+      const headTxt = good ? `✨ 깎기 좋은 기물 ${good}개${maybe ? ` · 👀 ${maybe}개` : ""}` : maybe ? `👀 깎을 수도 있는 기물 ${maybe}개` : "깎을 만한 기물 없음";
+      return `<article class="slot ${good ? "good" : ""}"><div class="slot-h"><b>${relDay(sl.s)}${dayDiff(sl.s) > 2 ? "" : ` ${d.getMonth()+1}/${d.getDate()}`} ${pad(d.getHours())}:${pad(d.getMinutes())}–${fmtShort(sl.e).split(" ")[1]}${sl.now ? ` <span class="pill obs">지금</span>` : ""}</b>
+        <span class="xs ${good || maybe ? "" : "muted"}">${headTxt}</span></div>
+        ${rows.map(r => `<div class="slot-row"><span class="nm">${esc(r.pot.name)}</span><span class="jtxt ${JUDGE[r.k].cls}">${JUDGE[r.k].txt}</span></div>`).join("") || `<p class="xs muted" style="margin:0">건조 중인 기물이 없어요.</p>`}
+        <div><button class="btn sm ghost" data-act="planSlot" data-t="${sl.s}">이 시간에 맞춘 보관법 보기 ↓</button></div></article>`;
+    }).join("");
+    slotHtml = `<div class="section-h"><h2>다가오는 방문 가능 시간</h2><span class="xs muted">2주</span></div><div class="list">${list || `<p class="muted small">앞으로 2주 안에 방문 가능 시간이 없어요.</p>`}</div>`;
+  }
+  return `<header class="top"><div class="brand"><span class="eyebrow">방문 계획</span><h1>언제 갈까?</h1><span class="tag">갈 수 있는 시간 중 언제 가면 좋을지, 그 시간에 맞추려면 어떻게 보관할지 보여줘요.</span></div></header>
+  <section class="panel"><h3>방문 가능 일정</h3><div style="display:flex;flex-direction:column;gap:10px">${visitBox}</div></section>
+  ${slotHtml}
+  <div class="section-h" id="planHead"><h2>원하는 시간에 맞추기</h2></div>
   <section class="summary"><div class="field" style="margin:0"><label for="planT">굽깎고 싶은 시간</label><input type="datetime-local" id="planT" value="${toInput(T)}"></div>
-  <div class="row xs muted" style="gap:10px"><span class="tri st-UNKNOWN"><span>빠름</span><span>중간</span><span>느림</span></span><span>세 칸은 빠르게·보통·느리게 마르는 경우에 그 시간의 예상 상태예요.</span></div></section>
-  <p class="note">데이터가 아직 적어서 어떤 방법도 성공을 보장하지 않아요. 특히 부분 개방 박스와 스티로폼 밀폐는 실험 결과가 없어 범위가 넓어요. 작업실에 가기 전에 '모델상 유력'인지 먼저 보세요.</p>
+  <div class="legend2"><span><i class="lg-ib"></i>가장 그럴듯한 적정 구간</span><span><i class="lg-ob"></i>빠르거나 늦게 마를 때까지</span><span><i class="lg-tl"></i>굽깎고 싶은 시간</span></div>
+  <p class="xs muted" style="margin:0">빨간 선이 진한 막대 안에 있으면, 그 보관법으로 그 시간에 깎기 좋다는 뜻이에요.</p></section>
+  <p class="note">데이터가 아직 적어서 어떤 방법도 성공을 보장하지 않아요. 특히 부분 개방 박스와 스티로폼 밀폐는 실험 결과가 없어 막대가 넓어요.</p>
   <div class="list" style="margin-top:12px">${items || `<p class="muted">계산할 기물이 없어요. 작업실에서 기물을 먼저 등록해 주세요.</p>`}</div>`;
 }
 
 const EXPS = [
-  {id:"EXP-001", title:"수분 많은 흙 · 오픈에어 후 박스", status:"과습", body:[
+  {id:"EXP-001", title:"수분 많은 흙 · 노출건조 후 박스", status:"과습", body:[
     "성형 2026-10-19(월, 추정) · 흙 상태 수분 많음 · 기물 종류·수량 미기록",
-    "1단계 월→화 (보관 미기록) · 2단계 화→수 오픈에어 · 3단계 수~ 박스 보관(종류·밀폐 미기록)",
+    "1단계 월→화 (보관 미기록) · 2단계 화→수 노출건조 · 3단계 수~ 박스 보관(종류·밀폐 미기록)",
     "관찰: 다소 축축함. 굽깎기는 가능했지만 손 압력으로 변형. 바닥이 다른 부분보다 덜 마름."],
     fact:"굽깎기가 가능하다는 것과 적정 상태라는 것은 다름. 적정 시점은 확인되지 않음."},
-  {id:"EXP-002", title:"부분 개방 박스 vs 스티로폼 밀폐", status:"진행 중", body:[
+  {id:"EXP-002", title:"부분 개방 박스 vs 스티로폼 밀폐", status:"둘 다 덜 마름", body:[
     "성형 2026-10-20(화, 추정) · 수분 많음 · 컵·보울 합계 3개",
-    "화→수 오픈에어. 수요일: 두꺼운 부분에서 슬립이 묻어남",
+    "화→수 노출건조. 수요일: 두꺼운 부분에서 슬립이 묻어남",
     "이후 컵은 박스 부분 개방·뒤집음, 보울은 스티로폼 박스 완전 밀폐·뒤집음",
-    "후속 관찰 예정: 2026-10-23(금, 추정)"],
-    fact:"컵과 보울의 형태가 달라 밀폐도 효과만 따로 분석할 수는 없음."},
-  {id:"EXP-003", title:"일반 흙 · 36~40시간 오픈에어", status:"과건조", body:[
-    "수요일 저녁 성형 → 금요일 오전 관찰 · 오픈에어",
+    "10/23(금) 19:08 컵: 부분 개방 박스 약 2일 뒤 굽·바닥 조금 축축 → 19:10 노출건조 → 21:13 여전히 조금 축축",
+    "보울(스티로폼 밀폐 약 2일): 덜 마름, 만지면 변형됨",
+    "컵은 노출건조로 바꿔 두고 주말에 확인 예정"],
+    fact:"부분 개방 박스는 가정한 범위(노출건조의 15~60%) 중 가장 느린 쪽(약 15% 안팎), 스티로폼 밀폐는 거의 안 마름(가정과 일치). 한 번의 결과라 오차가 큼. 컵과 보울의 형태가 달라 밀폐 효과만 따로 비교할 수는 없음."},
+  {id:"EXP-003", title:"일반 흙 · 36~40시간 노출건조", status:"과건조", body:[
+    "수요일 저녁 성형 → 금요일 오전 관찰 · 노출건조",
     "금요일 오전 과건조, 굽깎기 부적합"],
     fact:"일반 흙을 36~40시간 완전 노출하면 적정 상태를 지나칠 수 있음. 정확한 시각은 미확인."},
   {id:"EXP-004", title:"플라스틱 박스 밀폐 7일", status:"거의 변화 없음", body:[
@@ -825,7 +1260,7 @@ const EXPS = [
 ];
 function lab(now){
   const conds = [
-    {nm:"오픈에어", ch:{container:"none"}},
+    {nm:"노출건조", ch:{container:"none"}},
     {nm:"박스 · 부분 개방", ch:{container:"box", seal:"partial"}},
     {nm:"박스 · 덮개 닫음", ch:{container:"box", seal:"closed"}},
     {nm:"종이 박스 · 완전 밀폐", ch:{container:"box", seal:"sealed"}},
@@ -852,11 +1287,17 @@ function lab(now){
   logs.sort((a, b) => b.o.at - a.o.at);
   const inRange = logs.filter(l => l.res === "예상 범위 안").length, judged = logs.filter(l => l.cls !== "g-unk").length;
   const logHtml = logs.length ? `<div class="tbl-wrap"><table><thead><tr><th>기물 · 시각</th><th>직접 확인</th><th>예측과 비교</th></tr></thead><tbody>${logs.map(l => `<tr><td>${esc(l.p.name)}<div class="xs muted">${fmt(l.o.at, l.o.approxH)}</div></td><td>${OBS[l.o.level] ? OBS[l.o.level].e + " " + OBS[l.o.level].lab : ""}</td><td><span class="grade ${l.cls}">${l.res}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="small muted">아직 관찰 기록이 없어요.</p>`;
-  const dex = ["WET","DRYING","APPROACHING","READY","URGENT","OVERDRIED","UNKNOWN","TRIMMED"].map((s, i) => `<div class="it st-${s}"><div class="ch-wrap">${potSVG(["cup","bowl","vase","plate","cup","bowl","other","vase"][i], s)}</div><span>${ST[s].e} ${ST[s].lab}</span></div>`).join("");
+  const dex = ["WET","DRYING","APPROACHING","READY","URGENT","OVERDRIED","UNKNOWN","TRIMMED","BISQUE","GLAZED","DONE"].map((s, i) => `<div class="it st-${s}"><div class="ch-wrap">${potSVG(["cup","bowl","vase","plate","cup","bowl","other","vase","cup","bowl","vase"][i], s)}</div><span>${ST[s].e} ${ST[s].lab}</span></div>`).join("");
   return `<header class="top"><div class="brand"><span class="eyebrow">예측의 근거</span><h1>실험 노트</h1><span class="tag">기준일 2026-10-21 · 기록이 쌓일수록 예측 범위가 좁아져요.</span></div></header>
   <section class="panel"><h3>예측 적중 기록</h3><p class="small muted" style="margin-top:0">상태를 기록할 때마다 그 순간의 예측과 비교해 저장해요. ${judged ? `지금까지 ${judged}번 중 ${inRange}번이 예상 범위 안이었어요.` : "비교할 수 있는 기록이 아직 없어요."} 범위 안 기록이 충분히 쌓이기 전까지는 신뢰도를 '보통'보다 높게 표시하지 않아요.</p>${logHtml}</section>
-  <section class="panel"><h3>보관 조건별 건조 속도</h3><p class="small muted" style="margin-top:0">오픈에어 일반 흙을 100%로 둔 상대 속도예요. 근거 없는 조건은 범위를 넓게 잡았어요.</p><div class="tbl-wrap"><table><thead><tr><th>보관</th><th>상대 속도</th><th>근거</th></tr></thead><tbody>${rateRows}</tbody></table></div>
-  <p class="xs muted">적정 시작은 오픈에어 일반 흙 기준 약 14~24시간, 종료는 24~34시간으로 잡았어요. 종료 상한은 EXP-003(36~40시간 과건조)보다 앞에 두었고, 수분 많은 흙은 8~20시간 늦게, 두꺼운 기물은 1.2~1.6배 늦게 계산해요.</p></section>
+  <section class="panel"><h3>보관 조건별 건조 속도</h3><p class="small muted" style="margin-top:0">노출건조한 일반 흙을 100%로 둔 상대 속도예요. 근거 없는 조건은 범위를 넓게 잡았어요.</p><div class="tbl-wrap"><table><thead><tr><th>보관</th><th>상대 속도</th><th>근거</th></tr></thead><tbody>${rateRows}</tbody></table></div>
+  <p class="xs muted">적정 시작은 노출건조한 일반 흙 기준 약 14~24시간, 종료는 24~34시간으로 잡았어요. 종료 상한은 EXP-003(36~40시간 과건조)보다 앞에 두었고, 수분 많은 흙은 8~20시간 늦게 계산해요. 이 숫자들은 가정이고, 기록이 쌓이면 가장 먼저 고칠 부분이에요.</p></section>
+  <section class="panel"><h3>흙·크기·공기 보정</h3><div class="tbl-wrap"><table><thead><tr><th>항목</th><th>보정</th><th>근거</th></tr></thead><tbody>
+    ${Object.entries(CLAY_TYPES).map(([k, c]) => `<tr><td>${c.lab}</td><td>적정 구간 길이 ×${c.win.lo}~${c.win.hi}${c.rimFirst ? "<div class=\"xs muted\">입구가 먼저 마름 안내</div>" : ""}</td><td class="xs muted">${esc(c.ev)}</td></tr>`).join("")}
+    ${["small","medium","large"].map(k => `<tr><td>크기 ${SIZE[k].lab} <span class="xs muted">${SIZE[k].sub}</span></td><td>걸리는 시간 ×${SIZE[k].lo}~${SIZE[k].hi}</td><td class="xs muted">추정</td></tr>`).join("")}
+    ${["thin","normal","thick"].map(k => `<tr><td>두께 ${THICK[k].lab}</td><td>걸리는 시간 ×${THICK[k].lo}~${THICK[k].hi}</td><td class="xs muted">추정</td></tr>`).join("")}
+    ${["dry","humid"].map(k => `<tr><td>공기 ${ENV[k].lab}</td><td>마르는 속도 ×${ENV[k].lo}~${ENV[k].hi}</td><td class="xs muted">추정 · 습도가 건조 속도에 가장 큰 영향</td></tr>`).join("")}
+  </tbody></table></div><p class="xs muted">흙 목록: ${getClays().map(c => esc(c.name)).join(", ")}. 흙은 기물 등록·수정 화면에서 추가할 수 있어요.</p></section>
   <div class="section-h"><h2>실험 기록</h2></div>
   <div class="list">${EXPS.map(e => `<details class="exp"><summary><span><span class="mono xs muted">${e.id}</span><br><b style="font-weight:500">${e.title}</b></span><span class="chip">${e.status}</span></summary><ul>${e.body.map(b => `<li>${b}</li>`).join("")}</ul><p class="small" style="margin:6px 0 0"><b>확인된 점</b> · ${e.fact}</p></details>`).join("")}</div>
   <section class="panel" style="margin-top:12px"><div class="facts">
@@ -864,12 +1305,76 @@ function lab(now){
     <div><h3>아직 모르는 것</h3><ol><li>부분 개방 박스의 정확한 건조 속도</li><li>스티로폼 박스 완전 밀폐 시 적정 상태 유지 기간</li><li>흙 종류별 건조 속도 차이</li><li>기물 크기·두께에 따른 영향</li><li>작업실 온습도에 따른 변화</li><li>월요일 성형 후 금요일 굽깎기를 위한 최적 조건</li></ol></div>
   </div></section>
   <div class="section-h"><h2>상태 캐릭터 도감</h2></div>
-  <section class="panel"><div class="dex">${dex}</div><p class="xs muted" style="margin-bottom:0">흙이 마를수록 색이 밝아지는 실제 변화를 따랐어요. 과건조는 갈라짐 대신 회색 톤으로만 표현해요. 밀폐 보관 중인 기물은 잠든 얼굴로 바뀌어요.</p></section>`;
+  <section class="panel"><div class="dex">${dex}</div><p class="xs muted" style="margin-bottom:0">흙이 마를수록 색이 밝아지는 실제 변화를 따랐어요. 굽깎기 뒤에는 초벌(밝은 흙색) → 시유(유약 색) → 완성(윤기)으로 자라요. 과건조는 갈라짐 대신 회색 톤으로만 표현해요. 밀폐 보관 중인 기물은 잠든 얼굴로 바뀌어요.</p></section>`;
+}
+
+function checkinView(now){
+  const C = V.checkin, pots = POTS.filter(isDrying).sort((a, b) => a.formedAt - b.formedAt);
+  const envRow = `<div class="row" style="gap:6px"><span class="small muted">작업실 공기</span>${Object.entries(ENV).map(([k, v]) => `<button class="chipbtn" data-act="setEnv" data-env="${k}" aria-pressed="${getEnv() === k}">${v.lab}</button>`).join("")}</div>`;
+  const head = `<div class="detail-top"><button class="btn sm ghost" data-act="ciClose">← 닫기</button></div>
+    <header class="top" style="margin-top:4px"><div class="brand"><span class="eyebrow">작업실 체크인</span><h1>만져 본 기물을 골라요</h1>
+    <span class="tag">굽·바닥 기준으로 하나씩 눌러 주세요. 안 누른 기물은 기록하지 않아요. 보관을 바꾼 기물은 작업실 카드의 📦 보관으로 기록해요.</span></div></header>`;
+  if(!pots.length) return head + `<p class="muted">건조 중인 기물이 없어요.</p>`;
+  {
+    const picked = Object.keys(C.sel).length;
+    return head + `<section class="panel">${envRow}</section><div class="ci-list">${pots.map(p => {
+      const P = predict(p, now), sel = C.sel[p.id];
+      return `<div class="ci-row ${sel ? "picked" : ""}"><div class="ci-top"><div class="ch-wrap st-${P.state}">${potSVG(p.kind, P.state, {paused:P.paused, still:true})}</div><div style="min-width:0"><b>${esc(p.name)}</b><div class="xs muted">예상: ${ST[P.state].e} ${ST[P.state].lab} · ${esc(storageLabel(P.cur))}</div></div></div>
+        <div class="ci-btns">${QUICK.map(([lv, e, l]) => `<button class="qbtn" data-act="ciPick" data-id="${esc(p.id)}" data-lv="${lv}" aria-pressed="${sel === lv}">${e}<small>${l}</small></button>`).join("")}<button class="qbtn" data-act="ciPick" data-id="${esc(p.id)}" data-lv="trim" aria-pressed="${sel === "trim"}">🔪<small>깎았음</small></button></div></div>`;
+    }).join("")}</div>
+    <div class="ci-foot"><button class="btn" data-act="ciClose">취소</button><button class="btn primary" data-act="ciSave" ${picked ? "" : "disabled"}>${picked ? `저장 (${picked}개)` : "기물을 골라 주세요"}</button></div>`;
+  }
+
+}
+async function saveCheckin(){
+  const C = V.checkin; if(!C) return;
+  const now = Date.now();
+  let nObs = 0, nTrim = 0;
+  for(const p of POTS){
+    if(!isDrying(p)) continue;
+    const lv = C.sel[p.id];
+    if(!lv) continue;
+    if(lv === "trim"){ p.status = "trimmed"; p.events.push({id:uid(), type:"trim", at:now}); nTrim++; }
+    else if(lv){ p.events.push({id:uid(), type:"obs", at:now, approxH:0, level:lv, rim:"same", note:"", pred:predSnap(p, now)}); nObs++; }
+    p.updatedAt = now;
+  }
+  V.checkin = null; saveLocal(); render(); window.scrollTo(0, 0);
+  const parts = [nObs && `상태 ${nObs}개`, nTrim && `굽깎기 ${nTrim}개`].filter(Boolean);
+  toast(parts.length ? `${parts.join(", ")}를 기록했어요.` : "기록 없이 닫았어요.");
 }
 
 /* ───────── sheets ───────── */
 function segInput(name, opts, val){
   return `<div class="seg" role="radiogroup">${Object.entries(opts).map(([k, l]) => `<input type="radio" id="${name}-${k}" name="${name}" value="${k}" ${k === val ? "checked" : ""}><label for="${name}-${k}">${l}</label>`).join("")}</div>`;
+}
+function clayFields(prefix, pot = {}){
+  const clays = getClays(), sel = ("clayBodyId" in pot) ? (pot.clayBodyId || "") : (pot.id ? "" : "d1");
+  const dims = pot.dims || {};
+  return `<div class="field"><label for="${prefix}body">흙 종류</label><select id="${prefix}body" data-clay-select="${prefix}">
+      ${clays.map(c => `<option value="${esc(c.id)}" ${sel === c.id ? "selected" : ""}>${esc(c.name)}${c.name.includes((CLAY_TYPES[c.type] || CLAY_TYPES.unknown).lab) ? "" : " · " + (CLAY_TYPES[c.type] || CLAY_TYPES.unknown).lab}</option>`).join("")}
+      <option value="" ${sel === "" ? "selected" : ""}>모름</option><option value="__new">＋ 새 흙 추가</option></select>
+    <div id="${prefix}cbnewRow" hidden style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+      <input type="text" id="${prefix}cbname" maxlength="20" placeholder="흙 이름 (예: 조합토 A)">
+      ${segInput(prefix + "cbtype", {porcelain:"백자토", stoneware:"조합토·분청토", earthenware:"옹기토·테라코타", unknown:"모름"}, "porcelain")}
+      <span class="hint">종류에 따라 적정 구간을 다르게 계산해요. 새 흙은 다음부터 목록에 나와요.</span></div></div>
+  <div class="field"><span class="lab">크기</span>${segInput(prefix + "size", {small:"작음 · 10cm 미만", medium:"보통 · 10~20cm", large:"큼 · 20cm 이상", unknown:"모름"}, pot.size || (pot.id ? "unknown" : "medium"))}
+    <div class="row"><input type="number" id="${prefix}dd" min="1" max="100" step="0.5" inputmode="decimal" placeholder="지름 cm (선택)" style="flex:1;min-width:0" value="${dims.d || ""}"><input type="number" id="${prefix}dh" min="1" max="100" step="0.5" inputmode="decimal" placeholder="높이 cm (선택)" style="flex:1;min-width:0" value="${dims.h || ""}"></div></div>
+  <div class="field"><span class="lab">초기 흙 상태</span>${segInput(prefix + "clay", {wet:"수분 많음", normal:"일반", unknown:"모름"}, pot.clay || "normal")}</div>
+  <div class="field"><span class="lab">두께</span>${segInput(prefix + "thick", {thin:"얇음", normal:"보통", thick:"두꺼움", unknown:"모름"}, pot.thick || "normal")}</div>`;
+}
+function readClayInfo(f, prefix){
+  const id = f.querySelector("#" + prefix + "body").value;
+  let body = null;
+  if(id === "__new"){
+    const nm = f.querySelector("#" + prefix + "cbname").value.trim();
+    if(!nm) return {error:"새 흙 이름을 입력해 주세요."};
+    body = addClay(nm, radio(f, prefix + "cbtype") || "unknown");
+  } else if(id) body = getClays().find(c => c.id === id) || null;
+  const num = v => { const n = parseFloat(v); return isFinite(n) && n > 0 ? Math.round(n * 10) / 10 : null; };
+  const d = num(f.querySelector("#" + prefix + "dd").value), h = num(f.querySelector("#" + prefix + "dh").value);
+  return {clayBodyId:body ? body.id : null, clayBodyName:body ? body.name : null, clayType:body ? body.type : "unknown",
+    size:radio(f, prefix + "size") || "unknown", dims:(d || h) ? {d, h} : null,
+    clay:radio(f, prefix + "clay") || "unknown", thick:radio(f, prefix + "thick") || "unknown"};
 }
 function storageFields(prefix, st){
   return `<div class="field"><span class="lab">보관 용기</span>${segInput(prefix + "cont", CONT, st.container)}</div>
@@ -914,47 +1419,134 @@ function loginScreen(){
   }
   return `<main class="login">${hero}${body}${privacy}</main>`;
 }
+function backupText(){ return JSON.stringify({app:"claygotchi", v:1, exportedAt:Date.now(), pots:POTS, batches:BATCHES, clays:userClays()}); }
+function importBackup(text){
+  const d = JSON.parse(text);
+  const list = Array.isArray(d) ? d : d.pots;
+  if(!Array.isArray(list)) throw new Error("format");
+  let n = 0;
+  for(const p of list){
+    if(!p || typeof p.id !== "string" || !Array.isArray(p.events) || typeof p.formedAt !== "number") continue;
+    const i = POTS.findIndex(x => x.id === p.id);
+    if(i < 0){ POTS.push(p); n++; }
+    else if((p.updatedAt || 0) > (POTS[i].updatedAt || 0)){ POTS[i] = p; n++; }
+  }
+  if(Array.isArray(d.batches)) for(const b of d.batches) if(b && typeof b.id === "string" && typeof b.name === "string" && !BATCHES.some(x => x.id === b.id)) BATCHES.push({id:b.id, name:b.name.slice(0, 20), createdAt:b.createdAt || Date.now()});
+  if(Array.isArray(d.clays)){ const mine = userClays(); for(const c of d.clays) if(c && typeof c.id === "string" && typeof c.name === "string" && !getClays().some(x => x.id === c.id)) mine.push({id:c.id, name:c.name.slice(0, 20), type:CLAY_TYPES[c.type] ? c.type : "unknown", createdAt:c.createdAt || Date.now()}); lsSet(claysKey(USER.id), mine); }
+  saveBatches(); saveLocal();
+  return n;
+}
 function accountSheet(){
   return `<div class="sheet" role="dialog" aria-label="계정"><h2>${esc(USER.nick)}님</h2><p class="hint">기물 ${POTS.length}개 · ${fmt(USER.createdAt)}부터 사용</p>
     <div class="acct-list">
       <button class="btn" data-act="exportBk">📤 백업 파일로 내보내기</button>
       <label class="btn" for="bk-file" style="cursor:pointer">📥 백업 파일 가져오기</label><input type="file" id="bk-file" class="vh" accept="application/json,.json">
+      <button class="btn" data-act="copyBk">📋 백업을 텍스트로 복사</button>
+      <button class="btn" data-act="pasteBk">📋 복사한 백업 붙여넣기</button>
+      ${NATIVE ? `<button class="btn" data-act="toggleNotify">${lsGet(notifyKey(USER.id), false) ? "🔔 굽깎기 알림 켜짐 · 끄기" : "🔕 굽깎기 알림 꺼짐 · 켜기"}</button>` : ""}
       <button class="btn" data-act="logout">🚪 로그아웃</button>
       <button class="btn" style="color:var(--urgent)" data-act="askDelUser">이 사용자와 기록 모두 삭제</button>
     </div>
     ${V.data.delUser ? `<form id="f-deluser" class="confirm-box" autocomplete="off">되돌릴 수 없어요. PIN을 입력하면 삭제돼요.
       <input class="pin-input" style="margin-top:8px" type="password" id="d-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" aria-label="PIN">
       <div class="row" style="margin-top:8px"><button type="submit" class="btn sm terra">삭제하기</button></div></form>` : ""}
-    <p class="hint" style="margin-top:14px">기록은 이 기기에만 있어요. 홈 화면 앱을 지우거나 사파리 웹사이트 데이터를 지우면 같이 사라질 수 있으니 가끔 백업 파일을 저장해 두세요.</p>
+    <p class="hint" style="margin-top:14px">기록은 이 기기에만 있어요. 앱을 지우거나 웹사이트 데이터를 지우면 같이 사라질 수 있으니 가끔 백업 파일을 저장해 두세요.</p><p class="hint">다른 기기나 다른 버전으로 기록을 옮길 때는 ‘백업을 텍스트로 복사’ → 옮길 곳에서 ‘복사한 백업 붙여넣기’를 쓰면 돼요.</p>${NATIVE ? `<p class="hint">알림은 예상 적정 구간 2시간 전, 시작 무렵, 종료 3시간 전에 와요. 서버 없이 이 아이폰 안에서만 예약돼요. 위젯에는 ‘위젯에 표시’로 고른 기물이나 묶음이, 고르지 않으면 내 작업실 전체가 보여요.</p>` : ""}
     <div class="sheet-acts"><button class="btn" data-act="close">닫기</button></div></div>`;
 }
 function sheetHtml(){
   if(V.sheet === "account") return USER ? accountSheet() : "";
   const now = Date.now();
-  if(V.sheet === "add") return `<form class="sheet" id="f-add" role="dialog" aria-label="기물 등록"><h2>새 기물 등록</h2><p class="hint">성형 직후에 등록하면 가장 정확해요.</p>
-    <div class="field"><label for="a-name">이름</label><input type="text" id="a-name" required maxlength="30" placeholder="예: 보울 03" value=""></div>
-    <div class="field"><span class="lab">종류</span>${segInput("a-kind", KIND, "cup")}</div>
-    <div class="row" style="gap:12px"><div class="field" style="flex:1;min-width:120px"><label for="a-count">개수 (선택)</label><input type="number" id="a-count" min="1" max="50" placeholder="1"></div></div>
-    <div class="field"><span class="lab">초기 흙 상태</span>${segInput("a-clay", {wet:"수분 많음", normal:"일반", unknown:"모름"}, "normal")}</div>
-    <div class="field"><span class="lab">두께</span>${segInput("a-thick", {thin:"얇음", normal:"보통", thick:"두꺼움", unknown:"모름"}, "normal")}</div>
-    ${timeFields("a-", now, "성형 시각")}
-    <h3 style="margin-top:18px;font-size:16px">처음 보관 방법</h3>
-    ${storageFields("a-", {container:"none", seal:"partial", orient:"up"})}
-    <div class="field"><label for="a-note">메모 (선택)</label><textarea id="a-note" placeholder="흙 이름, 크기 등"></textarea></div>
+  if(V.sheet === "add"){
+    const prefs = getPrefs();
+    const kind = KIND[prefs.kind] ? prefs.kind : "cup";
+    const body = getClays().find(c => c.id === prefs.clayBodyId);
+    const summaryLine = `${body ? esc(body.name) : ("clayBodyId" in prefs ? "흙 모름" : "D1 백자토")} · 크기 ${(SIZE[prefs.size] || SIZE.medium).lab} · 두께 ${(THICK[prefs.thick] || THICK.normal).lab} · 지금 성형`;
+    return `<form class="sheet" id="f-add" role="dialog" aria-label="기물 등록"><h2>새 기물</h2><p class="hint">종류와 처음 보관만 고르면 돼요. 나머지는 지난번 값을 그대로 써요.</p>
+    <div class="field"><span class="lab">종류</span>${segInput("a-kind", KIND, kind)}</div>
+    <div class="field"><span class="lab">몇 개</span>${segInput("a-n", {1:"1", 2:"2", 3:"3", 4:"4", 5:"5", 6:"6"}, "1")}
+      <label class="check" for="a-autob"><input type="checkbox" id="a-autob" checked>2개 이상이면 묶음으로 묶기</label></div>
+    <h3 style="margin-top:16px;font-size:15px">처음 보관</h3>
+    ${storageFields("a-", {container:"none", seal:"partial", orient:"flip"})}
+    <p class="hint" style="margin-top:12px">${summaryLine}</p>
+    <details class="more"><summary>상세 정보 바꾸기</summary>
+      <div class="field"><label for="a-name">이름 (선택)</label><input type="text" id="a-name" maxlength="30" placeholder="${esc(nextAutoName(kind))} (자동)"></div>
+      <div class="field"><label for="a-batch">묶음</label><select id="a-batch"><option value="">없음</option>${BATCHES.map(b => `<option value="${esc(b.id)}" ${V.batch === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}<option value="__new">＋ 새 묶음 만들기</option></select>
+        <input type="text" id="a-bnew" maxlength="20" placeholder="새 묶음 이름 (예: 10/22 컵·보울)" hidden></div>
+      ${clayFields("a-", prefs)}
+      ${timeFields("a-", now, "성형 시각")}
+      <div class="field"><label for="a-note">메모 (선택)</label><textarea id="a-note"></textarea></div>
+    </details>
     <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">등록하기</button></div></form>`;
+  }
+  if(V.sheet === "batch"){
+    const B = V.data.bid ? BATCHES.find(b => b.id === V.data.bid) : null;
+    const d = new Date(), defName = `${d.getMonth()+1}/${d.getDate()} 묶음`;
+    const list = POTS.slice().sort((a, b) => (a.status === "trimmed") - (b.status === "trimmed") || b.formedAt - a.formedAt);
+    const isIn = p => B ? p.batchId === B.id : p.id === V.data.assign;
+    return `<form class="sheet" id="f-batch" role="dialog" aria-label="묶음"><h2>${B ? "묶음 편집" : "새 묶음"}</h2><p class="hint">같은 날 성형했거나 같이 보관하는 기물을 묶어 두면 작업실과 위젯에서 한 번에 볼 수 있어요. 기물은 한 묶음에만 들어가요.</p>
+      <div class="field"><label for="b-name">이름</label><input type="text" id="b-name" maxlength="20" required value="${esc(B ? B.name : defName)}"></div>
+      <div class="field"><span class="lab">포함할 기물</span>${list.length ? `<div class="obs-opts">${list.map(p => { const P = predict(p), ob = batchOf(p); return `<input type="checkbox" name="b-pot" id="bp-${esc(p.id)}" value="${esc(p.id)}" ${isIn(p) ? "checked" : ""}><label for="bp-${esc(p.id)}"><span class="e">${ST[P.state].e}</span><b style="font-weight:500">${esc(p.name)}</b><span class="s">${KIND[p.kind] || "기타"} · ${ST[P.state].lab}${ob && (!B || ob.id !== B.id) ? ` · 지금 ‘${esc(ob.name)}’에 있음` : ""}</span></label>`; }).join("")}</div>` : `<p class="hint">등록된 기물이 없어요.</p>`}</div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">${B ? "저장" : "만들기"}</button></div>
+      ${B ? `<div style="margin-top:14px;text-align:center"><button type="button" class="btn sm ghost" style="color:var(--urgent)" data-act="delBatch" data-bid="${esc(B.id)}">묶음 삭제 (기물은 그대로 남아요)</button></div>` : ""}</form>`;
+  }
+  if(V.sheet === "bkText") return `<div class="sheet" role="dialog" aria-label="백업 텍스트"><h2>📋 백업 텍스트</h2><p class="hint">${V.data.copied ? "복사했어요." : "아래 칸을 길게 눌러 전체 선택한 뒤 복사해 주세요."} 옮길 곳에서 ‘복사한 백업 붙여넣기’에 붙여 넣으면 돼요. 기물 ${POTS.length}개가 들어 있어요.</p>
+    <textarea id="bk-text" readonly rows="6" style="font-family:var(--f-mono);font-size:11px;word-break:break-all">${esc(V.data.text)}</textarea>
+    <div class="row" style="margin-top:8px"><button class="btn sm" data-act="copyBkAgain">다시 복사</button></div>
+    <div class="sheet-acts"><button class="btn" data-act="close">닫기</button></div></div>`;
+  if(V.sheet === "paste") return `<form class="sheet" id="f-paste" role="dialog" aria-label="백업 붙여넣기"><h2>📋 백업 붙여넣기</h2><p class="hint">다른 곳에서 복사한 백업 텍스트를 붙여 넣으세요. 같은 기물은 더 최근에 고친 쪽을 남기고, 새 기물은 추가돼요. 지금 기록은 지워지지 않아요.</p>
+    <textarea id="p-text" rows="6" placeholder='{"app":"claygotchi", …' style="font-family:var(--f-mono);font-size:11px"></textarea>
+    <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">가져오기</button></div></form>`;
+  if(V.sheet === "obsMore"){
+    const pot = POTS.find(p => p.id === V.data.id), ev = pot && pot.events.find(e => e.id === V.data.ev);
+    if(!ev) return "";
+    return `<form class="sheet" id="f-obsmore" role="dialog" aria-label="기록 더 적기"><h2>${OBS[ev.level].e} ${esc(pot.name)} · ${OBS[ev.level].lab}</h2><p class="hint">선택 항목이에요. 안 적어도 괜찮아요.</p>
+      <div class="field"><span class="lab">입구는?</span>${segInput("m-rim", RIM, ev.rim || "same")}</div>
+      <div class="field"><label for="m-note">메모</label><textarea id="m-note">${esc(ev.note || "")}</textarea></div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">닫기</button><button type="submit" class="btn primary">저장</button></div></form>`;
+  }
+  if(V.sheet === "env") return `<div class="sheet" role="dialog" aria-label="작업실 환경"><h2>🌡️ 작업실 공기는 어때요?</h2><p class="hint">공기가 건조하면 더 빨리, 습하면 더 천천히 마르게 계산해요. 지금부터 건조 중인 모든 기물에 적용돼요. 난방을 켜고 끄거나 장마철처럼 평소와 다를 때만 바꾸면 돼요.</p>
+    <div class="acct-list">${Object.entries(ENV).map(([k, v]) => `<button class="btn" data-act="setEnv" data-env="${k}" ${getEnv() === k ? 'style="border-color:var(--terracotta);font-weight:600"' : ""}>${k === "dry" ? "🔥" : k === "humid" ? "💧" : "🌤️"} ${v.lab}${getEnv() === k ? " · 지금" : ""}</button>`).join("")}</div>
+    <div class="sheet-acts"><button class="btn" data-act="close">닫기</button></div></div>`;
+  if(V.sheet === "edit"){
+    const pot = POTS.find(p => p.id === V.data.id); if(!pot) return "";
+    return `<form class="sheet" id="f-edit" role="dialog" aria-label="기물 정보 수정"><h2>기물 정보 수정</h2><p class="hint">흙, 크기, 두께를 바꾸면 예측을 다시 계산해요. 기록 타임라인은 그대로예요.</p>
+      <div class="field"><label for="e-name">이름</label><input type="text" id="e-name" required maxlength="30" value="${esc(pot.name)}"></div>
+      <div class="field"><span class="lab">종류</span>${segInput("e-kind", KIND, pot.kind || "other")}</div>
+      <div class="field"><label for="e-count">개수 (선택)</label><input type="number" id="e-count" min="1" max="50" value="${pot.count || ""}"></div>
+      ${clayFields("e-", pot)}
+      <div class="field"><label for="e-note">메모 (선택)</label><textarea id="e-note">${esc(pot.note || "")}</textarea></div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">저장</button></div></form>`;
+  }
+  if(V.sheet === "visits"){
+    const rules = getVisits();
+    return `<form class="sheet" id="f-visits" role="dialog" aria-label="방문 가능 일정"><h2>방문 가능 일정</h2><p class="hint">매주 작업실에 갈 수 있는 요일과 시간을 골라 주세요.</p>
+      ${DOW_ORDER.map(d => { const r = rules.find(x => x.dow === d); return `<div class="vrow"><label class="check" for="vd-${d}"><input type="checkbox" id="vd-${d}" ${r ? "checked" : ""}>${WD[d]}</label>
+        <div class="times"><input type="time" id="vs-${d}" value="${r ? r.start : "19:00"}" aria-label="${WD[d]} 시작"><span>~</span><input type="time" id="ve-${d}" value="${r ? r.end : "22:00"}" aria-label="${WD[d]} 끝"></div></div>`; }).join("")}
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">저장</button></div></form>`;
+  }
+  if(V.sheet === "stage"){
+    const pot = POTS.find(p => p.id === V.data.id), st = pot ? STAGES[stageOf(pot)] : null;
+    if(!pot || !st || !st.next) return "";
+    const nx = STAGES[st.next];
+    return `<form class="sheet" id="f-stage" role="dialog" aria-label="다음 단계"><h2>${nx.e} ${esc(pot.name)} · ${nx.lab}</h2><p class="hint">${josa(st.wait, "을", "를")} 마친 날을 기록하면 다마고치가 다음 모습으로 자라요.</p>
+      ${timeFields("g-", Date.now(), "마친 시각")}
+      <div class="field"><label for="g-note">메모 (선택)</label><textarea id="g-note" placeholder="${st.next === "glazed" ? "예: 유약 이름, 담금 횟수" : "예: 공방 가마, 온도"}"></textarea></div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">기록하기</button></div></form>`;
+  }
   const pot = POTS.find(p => p.id === V.data.id);
   if(!pot) return "";
   if(V.sheet === "obs") return `<form class="sheet" id="f-obs" role="dialog" aria-label="상태 기록"><h2>${esc(pot.name)} 상태 기록</h2><p class="hint">손끝으로 몸통과 바닥을 눌러 보고 가장 가까운 것을 골라 주세요.</p>
     ${timeFields("o-", now, "확인한 시각")}
-    <div class="field"><span class="lab">지금 상태</span><div class="obs-opts">${Object.entries(OBS).map(([k, o], i) => `<input type="radio" name="o-level" id="o-${k}" value="${k}" ${i === 0 ? "required" : ""}><label for="o-${k}"><span class="e">${o.e}</span><b style="font-weight:500">${o.lab}</b><span class="s">${o.sub}</span></label>`).join("")}</div></div>
-    <div class="field"><label for="o-note">메모 (선택)</label><textarea id="o-note" placeholder="예: 바닥이 더 축축함"></textarea></div>
+    <div class="field"><span class="lab">굽·바닥 상태</span><span class="hint">굽을 깎을 수 있는지는 바닥 쪽이 기준이에요. 바닥을 눌러 보고 골라 주세요.</span><div class="obs-opts">${Object.entries(OBS).map(([k, o], i) => `<input type="radio" name="o-level" id="o-${k}" value="${k}" ${i === 0 ? "required" : ""}><label for="o-${k}"><span class="e">${o.e}</span><b style="font-weight:500">${o.lab}</b><span class="s">${o.sub}</span></label>`).join("")}</div></div>
+    <div class="field"><span class="lab">입구는?</span>${segInput("o-rim", RIM, "same")}</div>
+    <div class="field"><label for="o-note">메모 (선택)</label><textarea id="o-note" placeholder="예: 손잡이 붙일 자리도 적당함"></textarea></div>
     <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">기록하기</button></div>
     <div style="margin-top:14px;text-align:center"><button type="button" class="btn sm terra" data-act="trim" data-id="${esc(pot.id)}">🎉 굽깎기를 완료했어요</button></div></form>`;
   if(V.sheet === "store"){
     const cur = currentStorage(pot) || {container:"none", seal:"partial", orient:"up"};
-    return `<form class="sheet" id="f-store" role="dialog" aria-label="보관 방법 변경"><h2>보관 방법 변경</h2><p class="hint">지금: ${esc(storageLabel(cur))}. 바꾸면 타임라인에 새 기록이 추가돼요.</p>
-    ${timeFields("s-", now, "옮긴 시각")}
-    ${storageFields("s-", {container:cur.container, seal:cur.seal || "partial", orient:cur.orient || "up"})}
+    return `<form class="sheet" id="f-store" role="dialog" aria-label="보관 방법 변경"><h2>보관 방법 변경</h2><p class="hint">지금: ${esc(storageLabel(cur))}. 지금 시각으로 기록돼요.</p>
+    ${storageFields("s-", {container:cur.container, seal:cur.seal || "partial", orient:cur.orient || "flip"})}
+    <details class="more"><summary>시간 바꾸기</summary>${timeFields("s-", now, "옮긴 시각")}</details>
     <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">변경하기</button></div></form>`;
   }
   return "";
@@ -976,7 +1568,7 @@ function readStorage(form, prefix){
 function render(){
   if(!USER){ $app.innerHTML = loginScreen(); const f = document.getElementById("l-pin") || document.getElementById("u-nick"); if(f && !f.disabled) setTimeout(() => f.focus({preventScroll:true}), 30); return; }
   const now = Date.now();
-  let html = V.detail ? detail(now) : V.tab === "plan" ? planner(now) : V.tab === "lab" ? lab(now) : studio(now);
+  let html = V.checkin ? checkinView(now) : V.detail ? detail(now) : V.tab === "plan" ? planner(now) : V.tab === "lab" ? lab(now) : studio(now);
   const tabs = [["studio","🏺","작업실"],["plan","🗓️","언제 갈까"],["lab","🧪","실험 노트"]];
   html += `<nav class="tabbar" aria-label="화면"><div class="in">${tabs.map(([k, i, l]) => `<button class="tab" data-act="tab" data-tab="${k}" ${V.tab === k && !V.detail ? 'aria-current="page"' : ""}><span class="ic" aria-hidden="true">${i}</span>${l}</button>`).join("")}</div></nav>`;
   const focusId = document.activeElement && document.activeElement.id;
@@ -993,11 +1585,53 @@ document.addEventListener("click", async ev => {
   switch(act){
     case "open": V.detail = id; V.confirmDel = false; V.delEvent = null; render(); window.scrollTo(0, 0); break;
     case "back": V.detail = null; render(); break;
-    case "tab": V.tab = el.dataset.tab; V.detail = null; render(); window.scrollTo(0, 0); break;
+    case "tab": V.tab = el.dataset.tab; V.detail = null; V.checkin = null; render(); window.scrollTo(0, 0); break;
     case "add": if(!READONLY) openSheet("add"); break;
     case "obs": if(!READONLY) openSheet("obs", {id}); break;
     case "store": if(!READONLY) openSheet("store", {id}); break;
     case "close": closeSheet(); break;
+    case "visits": openSheet("visits", {}); break;
+    case "editPot": openSheet("edit", {id}); break;
+    case "quickObs": {
+      const pot = POTS.find(p => p.id === id); if(!pot || READONLY) break;
+      const lv = el.dataset.lv, now = Date.now(), evId = uid();
+      pot.events.push({id:evId, type:"obs", at:now, approxH:0, level:lv, rim:"same", note:"", pred:predSnap(pot, now)});
+      pot.updatedAt = now; saveLocal(); render();
+      toast(`${OBS[lv].e} ${pot.name} · ${OBS[lv].lab}`, {label:"입구·메모 더 적기", fn:() => openSheet("obsMore", {id, ev:evId})});
+      break;
+    }
+    case "envSheet": openSheet("env", {}); break;
+    case "setEnv": await setStudioEnv(el.dataset.env); if(V.sheet === "env") closeSheet(); toast(`🌡️ 작업실 공기: ${ENV[getEnv()].lab}`); break;
+    case "checkin": V.checkin = {sel:{}}; V.detail = null; render(); window.scrollTo(0, 0); break;
+    case "ciClose": V.checkin = null; render(); break;
+    case "ciPick": { const C = V.checkin; if(!C) break; const lv = el.dataset.lv; if(C.sel[id] === lv) delete C.sel[id]; else C.sel[id] = lv; render(); break; }
+    case "ciSave": await saveCheckin(); break;
+    case "stage": openSheet("stage", {id}); break;
+    case "planSlot": { V.planT = Math.max(Number(el.dataset.t), Date.now() + 5 * 6e4); render(); const h = document.getElementById("planHead"); if(h) h.scrollIntoView({behavior:"smooth"}); break; }
+    case "pickBatch": V.batch = el.dataset.bid || null; render(); break;
+    case "pinPot": setPin(isPinned("pot", id) ? null : {type:"pot", id}); toast(isPinned("pot", id) ? "위젯에 이 기물을 표시해요." : "위젯 표시를 해제했어요."); break;
+    case "pinBatch": setPin(isPinned("batch", V.batch) ? null : {type:"batch", id:V.batch}); toast(isPinned("batch", V.batch) ? "위젯에 이 묶음을 표시해요." : "위젯 표시를 해제했어요."); break;
+    case "toggleNotify": {
+      if(!USER) break;
+      if(!LN){ toast("알림은 아이폰 앱에서만 켤 수 있어요."); break; }
+      if(lsGet(notifyKey(USER.id), false)){ lsSet(notifyKey(USER.id), false); toast("알림을 껐어요."); }
+      else {
+        let r = null; try { r = await LN.requestPermissions(); } catch {}
+        if(r && r.display === "granted"){ lsSet(notifyKey(USER.id), true); toast("알림을 켰어요."); }
+        else toast("설정 앱 → Claygotchi → 알림에서 허용해 주세요.");
+      }
+      scheduleSync();
+      if(V.sheet === "account") $sheet.innerHTML = `<div class="scrim" data-act="scrim">${sheetHtml()}</div>`;
+      break;
+    }
+    case "newBatch": openSheet("batch", {}); break;
+    case "editBatch": openSheet("batch", {bid:V.batch}); break;
+    case "delBatch": {
+      const bid = el.dataset.bid;
+      POTS.forEach(p => { if(p.batchId === bid){ p.batchId = null; p.updatedAt = Date.now(); } });
+      BATCHES = BATCHES.filter(b => b.id !== bid); if(V.batch === bid) V.batch = null;
+      saveLocal(); saveBatches(); closeSheet(); render(); toast("묶음을 지웠어요. 기물은 그대로예요."); break;
+    }
     case "pickUser": LV.mode = "pin"; LV.uid = el.dataset.uid; LV.err = ""; render(); break;
     case "toSignup": LV.mode = "signup"; LV.err = ""; render(); break;
     case "toPick": LV.mode = "pick"; LV.err = ""; render(); break;
@@ -1006,7 +1640,7 @@ document.addEventListener("click", async ev => {
     case "askDelUser": V.data.delUser = true; $sheet.innerHTML = `<div class="scrim" data-act="scrim">${sheetHtml()}</div>`; { const d = document.getElementById("d-pin"); if(d) d.focus(); } break;
     case "exportBk": {
       const d = new Date(), name = `claygotchi-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
-      const blob = new Blob([JSON.stringify({app:"claygotchi", v:1, exportedAt:Date.now(), pots:POTS}, null, 1)], {type:"application/json"});
+      const blob = new Blob([JSON.stringify({app:"claygotchi", v:1, exportedAt:Date.now(), pots:POTS, batches:BATCHES, clays:userClays()}, null, 1)], {type:"application/json"});
       try {
         const file = new File([blob], name, {type:"application/json"});
         if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:"Claygotchi 백업"}); break; }
@@ -1015,6 +1649,15 @@ document.addEventListener("click", async ev => {
       a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000); toast("백업 파일을 만들었어요."); break;
     }
+    case "copyBk": case "copyBkAgain": {
+      const text = act === "copyBk" ? backupText() : V.data.text;
+      let ok = false;
+      try { if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(() => toast("백업 텍스트를 복사했어요."), () => toast("길게 눌러 전체 선택 후 복사해 주세요.")); ok = true; } } catch {}
+      openSheet("bkText", {text, copied:ok});
+      if(!ok){ const ta = document.getElementById("bk-text"); if(ta){ ta.focus(); ta.select(); } }
+      break;
+    }
+    case "pasteBk": openSheet("paste", {}); break;
     case "toggleDone": V.showDone = !V.showDone; render(); break;
     case "import": {
       const have = new Set(POTS.map(p => p.id));
@@ -1028,7 +1671,7 @@ document.addEventListener("click", async ev => {
     }
     case "untrim": {
       const pot = POTS.find(p => p.id === id); if(!pot) return;
-      const c = JSON.parse(JSON.stringify(pot)); c.status = "active"; c.events = c.events.filter(e => e.type !== "trim");
+      const c = JSON.parse(JSON.stringify(pot)); c.status = "active"; c.events = c.events.filter(e => e.type !== "trim" && e.type !== "stage");
       await savePot(c); break;
     }
     case "askDel": V.confirmDel = true; render(); break;
@@ -1049,22 +1692,18 @@ document.addEventListener("keydown", ev => {
 });
 document.addEventListener("change", ev => {
   const t = ev.target;
+  if(t.dataset && t.dataset.claySelect){ const r = document.getElementById(t.dataset.claySelect + "cbnewRow"); if(r){ r.hidden = t.value !== "__new"; if(!r.hidden){ const n = document.getElementById(t.dataset.claySelect + "cbname"); if(n) n.focus(); } } return; }
+  if(t.id === "a-batch"){ const n = document.getElementById("a-bnew"); if(n){ n.hidden = t.value !== "__new"; if(!n.hidden) n.focus(); } return; }
+  if(t.id === "d-batch"){
+    const pot = POTS.find(p => p.id === V.detail); if(!pot) return;
+    if(t.value === "__new"){ openSheet("batch", {assign:pot.id}); return; }
+    const c = JSON.parse(JSON.stringify(pot)); c.batchId = t.value || null; savePot(c); toast(t.value ? "묶음에 넣었어요." : "묶음에서 뺐어요."); return;
+  }
   if(t.id === "bk-file" && t.files && t.files[0]){
     const r = new FileReader();
     r.onload = () => {
-      try {
-        const d = JSON.parse(r.result);
-        const list = Array.isArray(d) ? d : d.pots;
-        if(!Array.isArray(list)) throw 0;
-        let n = 0;
-        for(const p of list){
-          if(!p || typeof p.id !== "string" || !Array.isArray(p.events) || typeof p.formedAt !== "number") continue;
-          const i = POTS.findIndex(x => x.id === p.id);
-          if(i < 0) { POTS.push(p); n++; }
-          else if((p.updatedAt || 0) > (POTS[i].updatedAt || 0)) { POTS[i] = p; n++; }
-        }
-        saveLocal(); closeSheet(); render(); toast(n ? `기물 ${n}개를 가져왔어요.` : "새로 가져올 기록이 없어요.");
-      } catch { toast("Claygotchi 백업 파일이 아니에요."); }
+      try { const n = importBackup(r.result); closeSheet(); render(); toast(n ? `기물 ${n}개를 가져왔어요.` : "새로 가져올 기록이 없어요."); }
+      catch { toast("Claygotchi 백업 파일이 아니에요."); }
     };
     r.readAsText(t.files[0]); return;
   }
@@ -1077,6 +1716,47 @@ document.addEventListener("submit", async ev => {
   const f = ev.target, now = Date.now();
   const atOf = pre => { const v = fromInput(f.querySelector("#" + pre + "at").value); return isFinite(v) ? Math.min(v, now) : now; };
   const apxOf = pre => Number(f.querySelector("#" + pre + "apx").value) || 0;
+  if(f.id === "f-edit"){
+    const pot = POTS.find(p => p.id === V.data.id); if(!pot) return;
+    const name = f.querySelector("#e-name").value.trim(); if(!name){ f.querySelector("#e-name").focus(); return; }
+    const info = readClayInfo(f, "e-"); if(info.error){ toast(info.error); return; }
+    const cnt = parseInt(f.querySelector("#e-count").value, 10);
+    const c = {...JSON.parse(JSON.stringify(pot)), name, kind:radio(f, "e-kind") || pot.kind, count:isFinite(cnt) ? cnt : null, note:f.querySelector("#e-note").value.trim(), ...info};
+    closeSheet(); await savePot(c); toast("기물 정보를 바꿨어요. 예측을 다시 계산했어요."); return;
+  }
+  if(f.id === "f-visits"){
+    const rules = [];
+    for(const d of DOW_ORDER){
+      if(!f.querySelector("#vd-" + d).checked) continue;
+      const st = f.querySelector("#vs-" + d).value, en = f.querySelector("#ve-" + d).value;
+      if(!st || !en || en <= st){ toast(`${WD[d]}요일 끝나는 시간이 시작보다 늦어야 해요.`); return; }
+      rules.push({dow:d, start:st, end:en});
+    }
+    lsSet(visitsKey(USER.id), rules); V.planT = null; closeSheet(); render(); toast(rules.length ? "방문 가능 일정을 저장했어요." : "방문 가능 일정을 비웠어요."); return;
+  }
+  if(f.id === "f-stage"){
+    const pot = POTS.find(p => p.id === V.data.id); if(!pot) return;
+    const st = STAGES[stageOf(pot)]; if(!st || !st.next) return;
+    const c = JSON.parse(JSON.stringify(pot)); c.status = "trimmed";
+    let at = atOf("g-"); if(Date.now() - at < 60000) at = Date.now();
+    const prevAt = Math.max(0, ...c.events.filter(e => e.type === "trim" || e.type === "stage").map(e => e.at));
+    if(at <= prevAt) at = prevAt + 1000;
+    c.events.push({id:uid(), type:"stage", to:st.next, at, approxH:apxOf("g-"), note:f.querySelector("#g-note").value.trim()});
+    closeSheet(); await savePot(c); toast(`${STAGES[st.next].e} ${STAGES[st.next].lab}! 한 단계 자랐어요.`); return;
+  }
+  if(f.id === "f-batch"){
+    const name = f.querySelector("#b-name").value.trim(); if(!name){ f.querySelector("#b-name").focus(); return; }
+    let B = V.data.bid ? BATCHES.find(b => b.id === V.data.bid) : null;
+    if(B) B.name = name; else { B = {id:"b" + randHex(6), name, createdAt:now}; BATCHES.push(B); }
+    const picked = new Set([...f.querySelectorAll('input[name="b-pot"]:checked')].map(i => i.value));
+    POTS.forEach(p => {
+      if(picked.has(p.id) && p.batchId !== B.id){ p.batchId = B.id; p.updatedAt = now; }
+      else if(!picked.has(p.id) && p.batchId === B.id){ p.batchId = null; p.updatedAt = now; }
+    });
+    saveBatches(); saveLocal(); closeSheet();
+    if(!V.detail) V.batch = B.id;
+    render(); toast(`‘${name}’ 묶음을 저장했어요.`); return;
+  }
   if(f.id === "f-login"){
     const u = USERS.find(x => x.id === LV.uid); if(!u) return;
     if(Date.now() < LV.lockUntil) return;
@@ -1106,16 +1786,41 @@ document.addEventListener("submit", async ev => {
   if(f.id === "f-deluser"){
     const pin = f.querySelector("#d-pin").value;
     if(await hashPin(USER.salt, pin) !== USER.hash){ toast("PIN이 맞지 않아요."); return; }
-    lsDel(potsKey(USER.id)); USERS = USERS.filter(u => u.id !== USER.id); lsSet(USERS_KEY, USERS);
+    lsDel(potsKey(USER.id)); lsDel(batchKey(USER.id)); lsDel(claysKey(USER.id)); USERS = USERS.filter(u => u.id !== USER.id); lsSet(USERS_KEY, USERS);
     V.data = {}; signOut(); toast("사용자와 기록을 삭제했어요."); return;
   }
   if(f.id === "f-add"){
-    const name = f.querySelector("#a-name").value.trim(); if(!name){ f.querySelector("#a-name").focus(); return; }
-    const at = atOf("a-"), id = uid(), cnt = parseInt(f.querySelector("#a-count").value, 10);
-    const pot = {id, name, kind:radio(f, "a-kind") || "other", clay:radio(f, "a-clay") || "unknown", thick:radio(f, "a-thick") || "unknown",
-      count:isFinite(cnt) ? cnt : null, note:f.querySelector("#a-note").value.trim(), formedAt:at, formedApproxH:apxOf("a-"),
-      status:"active", createdAt:now, events:[{id:uid(), type:"storage", at, approxH:apxOf("a-"), ...readStorage(f, "a-")}]};
-    closeSheet(); await savePot(pot); V.detail = null; V.tab = "studio"; render(); toast(`${name} 탄생! 🏺`);
+    const kind = radio(f, "a-kind") || "other", n = Math.max(1, Math.min(6, parseInt(radio(f, "a-n") || "1", 10)));
+    const info = readClayInfo(f, "a-"); if(info.error){ toast(info.error); return; }
+    const st = readStorage(f, "a-");
+    const at = atOf("a-"), apx = apxOf("a-"), typed = f.querySelector("#a-name").value.trim(), env = getEnv();
+    let bid = f.querySelector("#a-batch").value || null;
+    if(bid === "__new" || (!bid && n > 1 && f.querySelector("#a-autob").checked)){
+      const d0 = new Date(at), bn = (bid === "__new" && f.querySelector("#a-bnew").value.trim()) || `${d0.getMonth()+1}/${d0.getDate()} ${KIND[kind]} ${n}개`;
+      bid = "b" + randHex(6); BATCHES.push({id:bid, name:bn, createdAt:now}); saveBatches();
+    }
+    const note = f.querySelector("#a-note").value.trim(), names = [];
+    for(let k = 0; k < n; k++){
+      const name = typed ? (n > 1 ? `${typed} ${k + 1}` : typed) : nextAutoName(kind, 0);
+      const events = [{id:uid(), type:"storage", at, approxH:apx, ...st}];
+      if(env !== "normal") events.push({id:uid(), type:"env", at, env});
+      POTS.push({id:uid(), name, batchId:bid, kind, ...info, count:null, note, formedAt:at, formedApproxH:apx, status:"active", createdAt:now, updatedAt:now, events});
+      names.push(name);
+    }
+    lsSet(prefsKey(USER.id), {kind, clayBodyId:info.clayBodyId, size:info.size, thick:info.thick, clay:info.clay});
+    closeSheet(); saveLocal(); V.detail = null; V.checkin = null; V.tab = "studio"; render();
+    toast(n > 1 ? `${names[0]} 외 ${n - 1}개 탄생! 🏺` : `${names[0]} 탄생! 🏺`); return;
+  }
+  if(f.id === "f-paste"){
+    const text = f.querySelector("#p-text").value.trim(); if(!text){ toast("백업 텍스트를 붙여 넣어 주세요."); return; }
+    try { const n = importBackup(text); closeSheet(); render(); toast(n ? `기물 ${n}개를 가져왔어요.` : "새로 가져올 기록이 없어요."); }
+    catch { toast("Claygotchi 백업 텍스트가 아니에요. 처음부터 끝까지 모두 복사했는지 확인해 주세요."); }
+    return;
+  }
+  if(f.id === "f-obsmore"){
+    const pot = POTS.find(p => p.id === V.data.id), ev = pot && pot.events.find(e => e.id === V.data.ev); if(!ev) return;
+    ev.rim = radio(f, "m-rim") || "same"; ev.note = f.querySelector("#m-note").value.trim(); pot.updatedAt = Date.now();
+    closeSheet(); saveLocal(); render(); toast("기록에 더했어요."); return;
   }
   if(f.id === "f-obs"){
     const level = radio(f, "o-level"); if(!level){ toast("상태를 하나 골라 주세요."); return; }
@@ -1123,7 +1828,7 @@ document.addEventListener("submit", async ev => {
     const at = atOf("o-"), P = predict(pot, at);
     const pred = P.st ? {fast:P.st.fast, mid:P.st.mid, slow:P.st.slow, state:P.state, conf:P.conf} : null;
     const c = JSON.parse(JSON.stringify(pot));
-    c.events.push({id:uid(), type:"obs", at, approxH:apxOf("o-"), level, note:f.querySelector("#o-note").value.trim(), pred});
+    c.events.push({id:uid(), type:"obs", at, approxH:apxOf("o-"), level, rim:radio(f, "o-rim") || "same", note:f.querySelector("#o-note").value.trim(), pred});
     closeSheet(); await savePot(c); toast("기록했어요. 예상 구간을 다시 계산했어요.");
   }
   if(f.id === "f-store"){
@@ -1136,14 +1841,16 @@ document.addEventListener("submit", async ev => {
 setInterval(() => { if(!USER) return; if(document.activeElement && document.activeElement.id === "planT") return; render(); }, 60000);
 
 /* ───────── boot ───────── */
-function boot(){
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && USER){ if(!V.sheet) render(); scheduleSync(); } });
+async function boot(){
+  await restoreFromNative();
   loadUsers();
   const cur = lsGet(CUR_KEY, null), u = USERS.find(x => x.id === cur);
   if(u) signIn(u, true);
   else { LV.mode = USERS.length ? "pick" : "signup"; render(); }
 }
 boot();
-if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
 </script>
+<script>if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
 </body></html>
