@@ -272,6 +272,8 @@ input::-webkit-date-and-time-value{text-align:left;margin:0}
 .seg input:checked+label{background:var(--charcoal);color:var(--ivory);border-color:var(--charcoal)}
 .seg input:focus-visible+label{outline:2px solid var(--terracotta);outline-offset:2px}
 .obs-opts{display:flex;flex-direction:column;gap:8px}
+.labbox{border:1px dashed var(--terracotta);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.labrow{gap:6px;align-items:center}
 .obs-opts input{position:absolute;opacity:0;pointer-events:none}
 .obs-opts label{display:grid;grid-template-columns:28px 1fr;gap:2px 8px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 12px;cursor:pointer}
 .obs-opts label .e{grid-row:1/3;font-size:20px}
@@ -366,11 +368,15 @@ const SIZE = {
   large:{lab:"큼", sub:"20cm 이상", lo:1.05, mid:1.2, hi:1.4},
   unknown:{lab:"모름", lo:.85, mid:1, hi:1.25}
 };
+/* Studio air, 5 levels by relative humidity. Effect kept mild: EXP-005 reached ready in 16.6h at 70%. */
 const ENV = {
-  normal:{lab:"평소", lo:1, mid:1, hi:1},
-  dry:{lab:"건조함(난방 중)", lo:1.1, mid:1.3, hi:1.6},
-  humid:{lab:"습함(비·장마)", lo:.6, mid:.75, hi:.9}
+  vdry:{lab:"매우 건조", range:"40% 미만", min:0, max:40, e:"🔥", lo:1.2, mid:1.35, hi:1.6},
+  dry:{lab:"건조", range:"40~50%", min:40, max:50, e:"☀️", lo:1.05, mid:1.15, hi:1.3},
+  normal:{lab:"보통", range:"50~65%", min:50, max:65, e:"🌤️", lo:.9, mid:1, hi:1.1},
+  humid:{lab:"습함", range:"65~80%", min:65, max:80, e:"🌧️", lo:.7, mid:.85, hi:1},
+  vhumid:{lab:"매우 습함", range:"80% 이상", min:80, max:101, e:"💧", lo:.5, mid:.65, hi:.8}
 };
+const envOfRH = rh => Object.keys(ENV).find(k => rh >= ENV[k].min && rh < ENV[k].max) || "normal";
 const RIM = {same:"비슷해요", drier:"입구가 더 말랐어요", wetter:"입구가 더 축축해요"};
 const THICK = {
   thin:{lab:"얇음", lo:.7, mid:.8, hi:.9},
@@ -766,21 +772,80 @@ function exp002Pots(){
 const prefsKey = id => "claygotchi.prefs." + id, envKey = id => "claygotchi.env." + id;
 const getPrefs = () => { const v = USER ? lsGet(prefsKey(USER.id), {}) : {}; return v && typeof v === "object" ? v : {}; };
 const getEnv = () => { const v = USER ? lsGet(envKey(USER.id), "normal") : "normal"; return ENV[v] ? v : "normal"; };
+const envReadKey = id => "claygotchi.envread." + id;
+const getEnvReading = () => { const v = USER ? lsGet(envReadKey(USER.id), null) : null; return v && typeof v === "object" ? v : null; };
+const readingText = r => r ? [r.rh != null ? `${r.rh}%` : "", r.temp != null ? `${r.temp}°C` : ""].filter(Boolean).join(" · ") : "";
 const QUICK = [["soaked","💧","축축해요"],["damp","🌱","조금 축축"],["ready","✨","딱 좋아요"],["firm","🚨","단단해요"],["over","🪨","말랐어요"]];
 const isDrying = p => p.status !== "trimmed" && stageOf(p) === "drying";
-function predSnap(pot, at){ const P = predict(pot, at); return P.st ? {fast:P.st.fast, mid:P.st.mid, slow:P.st.slow, state:P.state, conf:P.conf} : null; }
+function predSnap(pot, at){ const P = predict(pot, at); return P.st ? {fast:P.st.fast, mid:P.st.mid, slow:P.st.slow, state:P.state, conf:P.conf, tS:P.tS && isFinite(P.tS.mid) ? Math.round(P.tS.mid) : null, tE:P.tE && isFinite(P.tE.mid) ? Math.round(P.tE.mid) : null} : null; }
 function nextAutoName(kind, offset = 0){
   const lab = KIND[kind] || "기물", re = new RegExp("^" + lab + " (\\d+)$");
   let max = 0; POTS.forEach(p => { const m = (p.name || "").match(re); if(m) max = Math.max(max, parseInt(m[1], 10)); });
   return `${lab} ${pad(max + 1 + offset)}`;
 }
-async function setStudioEnv(env){
+async function setStudioEnv(env, reading = null){
   if(!USER || !ENV[env]) return;
   const prev = getEnv(); lsSet(envKey(USER.id), env);
-  if(prev === env) return;
   const now = Date.now();
-  POTS.forEach(p => { if(isDrying(p)){ p.events.push({id:uid(), type:"env", at:now, env}); p.updatedAt = now; } });
+  if(reading) lsSet(envReadKey(USER.id), {...reading, at:now}); else lsDel(envReadKey(USER.id));
+  if(prev === env && !reading){ render(); return; }
+  const ev = {type:"env", at:now, env};
+  if(reading){ if(reading.rh != null) ev.rh = reading.rh; if(reading.temp != null) ev.temp = reading.temp; }
+  POTS.forEach(p => { if(isDrying(p)){ p.events.push({id:uid(), ...ev}); p.updatedAt = now; } });
   saveLocal(); render();
+}
+/* ───────── 실험 모드: 무게·바닥 두께·마른 무게 기록, CSV 내보내기 ───────── */
+const labKey = id => "claygotchi.lab." + id;
+const isLab = () => !!(USER && lsGet(labKey(USER.id), false));
+const isLabPot = p => isLab() && p && p.lab;
+const numIn = (root, sel) => { const el = root.querySelector(sel); if(!el) return null; const n = parseFloat(el.value); return isFinite(n) && n > 0 ? Math.round(n * 10) / 10 : null; };
+function wInfo(pot, w){
+  if(w == null) return "";
+  const parts = [`⚖️ ${w}g`];
+  if(pot.w0) parts.push(`성형 대비 −${((1 - w / pot.w0) * 100).toFixed(1)}%`);
+  if(pot.dryG) parts.push(`함수율 ${((w / pot.dryG - 1) * 100).toFixed(1)}%`);
+  return parts.join(" · ");
+}
+const lastWeight = pot => { const ws = (pot.events || []).filter(e => e.type === "obs" && e.w != null).sort(byAt); return ws.length ? ws[ws.length - 1] : null; };
+function labLine(){
+  return isLab() ? `<div class="envline">🧪 <b>실험 모드</b> <span class="muted">· 실험 기물은 상태를 누르면 무게도 물어봐요</span> <button class="linkbtn" data-act="account">끄기·내보내기</button></div>` : "";
+}
+function labCsv(){
+  const pots = POTS.filter(p => p.lab).sort((a, b) => a.formedAt - b.formedAt);
+  const iso = t => { if(t == null || !isFinite(t)) return ""; const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const head = ["실험","기물","종류","흙","바닥 두께(mm)","성형 시각","성형 무게(g)","마른 무게(g)","기록","시각","경과(h)","상태","입구","무게(g)","성형 대비 감소(%)","함수율(%)","깎기 전(g)","깎기 후(g)","보관","습도(%)","온도(°C)","예측 상태","예측 적정 시작","예측 적정 끝","신뢰도","메모"];
+  const rows = [head];
+  for(const p of pots){
+    const base = [p.exp || "", p.name, KIND[p.kind] || "", clayLabel(p), p.baseMm ?? "", iso(p.formedAt), p.w0 ?? "", p.dryG ?? ""];
+    const pct = w => w != null && p.w0 ? ((1 - w / p.w0) * 100).toFixed(1) : "";
+    const mc = w => w != null && p.dryG ? ((w / p.dryG - 1) * 100).toFixed(1) : "";
+    rows.push([...base, "성형", iso(p.formedAt), "0.0", "", "", p.w0 ?? "", p.w0 ? "0.0" : "", mc(p.w0), "", "", "", "", "", "", "", "", "", p.note || ""]);
+    for(const e of (p.events || []).slice().sort(byAt)){
+      const h = ((e.at - p.formedAt) / H).toFixed(1);
+      let kind = "", lv = "", rim = "", w = null, wb = "", wa = "", st = "", rh = "", tp = "", pr = e.pred || {};
+      if(e.type === "obs"){ kind = "상태"; lv = OBS[e.level] ? OBS[e.level].lab : ""; rim = e.rim && RIM[e.rim] ? RIM[e.rim] : ""; w = e.w ?? null; }
+      else if(e.type === "trim"){ kind = "굽깎기"; wb = e.wBefore ?? ""; wa = e.wAfter ?? ""; }
+      else if(e.type === "stage"){ kind = STAGES[e.to] ? STAGES[e.to].lab : "단계"; w = e.dryG ?? null; }
+      else if(e.type === "storage"){ kind = "보관"; st = storageLabel(e); }
+      else if(e.type === "env"){ kind = "공기"; lv = ENV[e.env] ? ENV[e.env].lab : ""; rh = e.rh ?? ""; tp = e.temp ?? ""; }
+      else continue;
+      rows.push([...base, kind, iso(e.at), h, lv, rim, w ?? "", pct(w), mc(w), wb, wa, st, rh, tp, pr.state && ST[pr.state] ? ST[pr.state].lab : "", iso(pr.tS), iso(pr.tE), pr.conf && CONF[pr.conf] ? CONF[pr.conf] : "", e.note || ""]);
+    }
+  }
+  return "\ufeff" + rows.map(r => r.map(v => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(",")).join("\r\n");
+}
+async function shareFile(name, blob, title){
+  try {
+    const file = new File([blob], name, {type:blob.type});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title}); return true; }
+  } catch(e){ if(e && e.name === "AbortError") return false; }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000); return true;
+}
+function envLine(){
+  const r = getEnvReading(), k = getEnv();
+  return `<div class="envline">🌡️ 작업실 공기: <b>${ENV[k].e} ${ENV[k].lab}</b> <span class="muted">${r ? `(${readingText(r)})` : `(${ENV[k].range})`} · 마르는 속도 계산에 반영돼요</span> <button class="linkbtn" data-act="envSheet">바꾸기</button></div>${labLine()}`;
 }
 
 /* ───────── view state ───────── */
@@ -867,11 +932,13 @@ function syncWidget(){
   if(!WB || !USER) return;
   try { WB.save({json:JSON.stringify(buildWidgetData())}).catch(() => {}); } catch {}
 }
+const TEST_NOTI_ID = 9999;
 async function syncNotifications(){
   if(!LN || !USER) return;
   try {
     const pend = await LN.getPending();
-    if(pend && pend.notifications && pend.notifications.length) await LN.cancel({notifications:pend.notifications.map(n => ({id:n.id}))});
+    const old = pend && pend.notifications ? pend.notifications.filter(n => n.id !== TEST_NOTI_ID) : [];
+    if(old.length) await LN.cancel({notifications:old.map(n => ({id:n.id}))});
     if(!lsGet(notifyKey(USER.id), false)) return;
     const perm = await LN.checkPermissions(); if(!perm || perm.display !== "granted") return;
     const now = Date.now(), list = [];
@@ -990,7 +1057,7 @@ function studio(now){
   const dryingN = POTS.filter(isDrying).length;
   const summary = `<section class="summary" aria-label="작업실 요약"><div class="q">관리 중인 기물 ${active.length}개</div>${nextHtml}
     ${dryingN ? `<div><button class="btn primary" data-act="checkin">🏁 작업실 도착 · 한 번에 기록</button></div>` : ""}
-    <div class="envline">🌡️ 작업실 공기: <b>${ENV[getEnv()].lab}</b> <span class="muted">· 마르는 속도 계산에 반영돼요</span> <button class="linkbtn" data-act="envSheet">바꾸기</button></div><div class="chips">${chipHtml}${need.length ? `<span class="chip">❓ 관찰 필요 ${need.length}</span>` : ""}</div></section>`;
+    ${envLine()}<div class="chips">${chipHtml}${need.length ? `<span class="chip">❓ 관찰 필요 ${need.length}</span>` : ""}</div></section>`;
   const list = `<div class="list">${preds.map(x => card(x.p, now)).join("")}</div>`;
   const doneHtml = done.length ? `<div class="section-h"><h2>굽깎기 이후 · 자라는 중</h2><button class="btn sm ghost" data-act="toggleDone">${V.showDone ? "접기" : `${done.length}개 보기`}</button></div>${V.showDone ? `<div class="list">${done.map(p => card(p, now)).join("")}</div>` : ""}` : "";
   const modeNote = "";
@@ -1068,10 +1135,10 @@ function detail(now){
   evs.forEach(e => {
     let tx;
     if(e.type === "storage") tx = `${e.container === "none" ? "🌬️" : "📦"} ${esc(storageLabel(e))}<div class="sub">${e.orient && e.orient !== "unknown" && e.container !== "none" ? ORIENT[e.orient] + " · " : ""}${rateOf(e).ev}</div>`;
-    else if(e.type === "obs") tx = `${OBS[e.level] ? OBS[e.level].e : "📝"} 직접 확인: ${OBS[e.level] ? OBS[e.level].lab : ""}${e.rim && e.rim !== "same" && RIM[e.rim] ? `<div class="sub">${RIM[e.rim]}</div>` : ""}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
-    else if(e.type === "env") tx = `🌡️ 작업실 공기: ${ENV[e.env] ? ENV[e.env].lab : "평소"}<div class="sub">이때부터 마르는 속도 계산에 반영</div>`;
-    else if(e.type === "stage") tx = `${STAGES[e.to] ? STAGES[e.to].e + " " + STAGES[e.to].lab : "단계 변경"}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
-    else if(e.type === "trim") tx = `🎉 굽깎기 완료${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
+    else if(e.type === "obs") tx = `${OBS[e.level] ? OBS[e.level].e : "📝"} 직접 확인: ${OBS[e.level] ? OBS[e.level].lab : ""}${e.w != null ? `<div class="sub">${wInfo(pot, e.w)}</div>` : ""}${e.rim && e.rim !== "same" && RIM[e.rim] ? `<div class="sub">${RIM[e.rim]}</div>` : ""}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
+    else if(e.type === "env") tx = `🌡️ 작업실 공기: ${ENV[e.env] ? ENV[e.env].lab : "보통"}${e.rh != null || e.temp != null ? ` <span class="sub">${readingText(e)}</span>` : ""}<div class="sub">이때부터 마르는 속도 계산에 반영</div>`;
+    else if(e.type === "stage") tx = `${STAGES[e.to] ? STAGES[e.to].e + " " + STAGES[e.to].lab : "단계 변경"}${e.dryG ? `<div class="sub">⚖️ 마른 무게 ${e.dryG}g</div>` : ""}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
+    else if(e.type === "trim") tx = `🎉 굽깎기 완료${e.wBefore || e.wAfter ? `<div class="sub">⚖️ 깎기 전 ${e.wBefore ?? "?"}g → 후 ${e.wAfter ?? "?"}g</div>` : ""}${e.note ? `<div class="sub">${esc(e.note)}</div>` : ""}`;
     const del = e.id === firstId || READONLY ? "" : V.delEvent === e.id
       ? `<button class="icon-btn" style="color:var(--urgent)" data-act="delEvConfirm" data-ev="${esc(e.id)}">삭제 확인</button>`
       : `<button class="icon-btn" data-act="delEv" data-ev="${esc(e.id)}" aria-label="기록 지우기">지우기</button>`;
@@ -1107,7 +1174,7 @@ function detail(now){
     <span class="k">성형</span><span class="v">${fmt(pot.formedAt, pot.formedApproxH)} · ${KIND[pot.kind]}${pot.count ? ` ${pot.count}개` : ""}</span>
     <span class="k">흙</span><span class="v">${esc(clayLabel(pot))}${pot.clayType && CLAY_TYPES[pot.clayType] && pot.clayType !== "unknown" && !(pot.clayBodyName || "").includes(CLAY_TYPES[pot.clayType].lab) ? ` <span class="xs muted">(${CLAY_TYPES[pot.clayType].lab})</span>` : ""} · 초기 ${CLAY[pot.clay] ? CLAY[pot.clay].lab : "모름"}</span>
     <span class="k">크기·두께</span><span class="v">${(SIZE[pot.size] || SIZE.unknown).lab}${pot.dims ? ` <span class="xs muted">(${[pot.dims.d ? "지름 " + pot.dims.d + "cm" : "", pot.dims.h ? "높이 " + pot.dims.h + "cm" : ""].filter(Boolean).join(" · ")})</span>` : ""} · 두께 ${THICK[pot.thick] ? THICK[pot.thick].lab : "모름"}</span>
-  </div>${pot.note ? `<p class="small muted" style="margin:10px 0 0">${esc(pot.note)}</p>` : ""}</section>
+  </div>${pot.lab ? (() => { const lw = lastWeight(pot); return `<p class="small" style="margin:10px 0 0">🧪 <b>${esc(pot.exp || "실험")}</b> · ${[pot.w0 ? `성형 ${pot.w0}g` : "성형 무게 없음", pot.baseMm ? `바닥 ${pot.baseMm}mm` : "", lw ? `최근 ${wInfo(pot, lw.w).replace("⚖️ ", "")}` : "", pot.dryG ? `마른 무게 ${pot.dryG}g` : ""].filter(Boolean).join(" · ")} <button class="linkbtn" data-act="editPot" data-id="${esc(pot.id)}">고치기</button></p>`; })() : ""}${pot.note ? `<p class="small muted" style="margin:10px 0 0">${esc(pot.note)}</p>` : ""}</section>
   <section class="panel st-${s}"><h3>${P.stage && P.stage !== "drying" ? "다음 단계" : "굽깎기 최적 시간"}</h3>${windowBlock(pot, P, now, true)}</section>
   ${P.terminal ? "" : `<section class="panel"><h3>건조 진행 예상</h3><div class="chart-wrap">${chartSVG(pot, P, now)}</div>
     <div class="legend"><span><i style="background:var(--terracotta)"></i>중간 예상 (점선은 미래)</span><span><i style="background:var(--terracotta);opacity:.25"></i>빠른~느린 범위</span><span><i style="background:var(--sage-soft)"></i>굽깎기 적정</span><span>● 직접 확인</span></div></section>`}
@@ -1246,8 +1313,8 @@ const EXPS = [
     "화→수 노출건조. 수요일: 두꺼운 부분에서 슬립이 묻어남",
     "이후 컵은 박스 부분 개방·뒤집음, 보울은 스티로폼 박스 완전 밀폐·뒤집음",
     "10/23(금) 19:08 컵: 부분 개방 박스 약 2일 뒤 굽·바닥 조금 축축 → 19:10 노출건조 → 21:13 여전히 조금 축축",
-    "보울(스티로폼 밀폐 약 2일): 덜 마름, 만지면 변형됨",
-    "컵은 노출건조로 바꿔 두고 주말에 확인 예정"],
+    "10/24(토) 13:49 컵: 노출건조 약 18.6시간 뒤 조금 단단 (예측보다 조금 느림)",
+    "보울(스티로폼 밀폐 약 2일): 덜 마름, 만지면 변형됨"],
     fact:"부분 개방 박스는 가정한 범위(노출건조의 15~60%) 중 가장 느린 쪽(약 15% 안팎), 스티로폼 밀폐는 거의 안 마름(가정과 일치). 한 번의 결과라 오차가 큼. 컵과 보울의 형태가 달라 밀폐 효과만 따로 비교할 수는 없음."},
   {id:"EXP-003", title:"일반 흙 · 36~40시간 노출건조", status:"과건조", body:[
     "수요일 저녁 성형 → 금요일 오전 관찰 · 노출건조",
@@ -1256,7 +1323,11 @@ const EXPS = [
   {id:"EXP-004", title:"플라스틱 박스 밀폐 7일", status:"거의 변화 없음", body:[
     "성형 직후 플라스틱 상자 보관 (완전 밀폐로 추정) · 약 7일",
     "일주일 후에도 성형 직후와 거의 비슷"],
-    fact:"이 작업실에서 플라스틱 박스는 수분 유지에 효과적. 밀폐 정도와 기물별 수분 변화는 측정 안 됨."}
+    fact:"이 작업실에서 플라스틱 박스는 수분 유지에 효과적. 밀폐 정도와 기물별 수분 변화는 측정 안 됨."},
+  {id:"EXP-005", title:"일반 흙 보울 · 노출건조 약 16.6시간", status:"딱 좋음", body:[
+    "10/23(금) 21:12 성형 · 보울 3개 · 초기 흙 일반 · 성형 직후부터 노출건조",
+    "10/24(토) 13:49 굽·바닥 딱 좋아요 (약 16.6시간) · 선반 습도 70%"],
+    fact:"일반 흙 노출건조 적정 시작(가정 14~24시간)에 대한 첫 실제 기준점. 중간 예상(18시간)보다 조금 빨랐음."}
 ];
 function lab(now){
   const conds = [
@@ -1296,7 +1367,7 @@ function lab(now){
     ${Object.entries(CLAY_TYPES).map(([k, c]) => `<tr><td>${c.lab}</td><td>적정 구간 길이 ×${c.win.lo}~${c.win.hi}${c.rimFirst ? "<div class=\"xs muted\">입구가 먼저 마름 안내</div>" : ""}</td><td class="xs muted">${esc(c.ev)}</td></tr>`).join("")}
     ${["small","medium","large"].map(k => `<tr><td>크기 ${SIZE[k].lab} <span class="xs muted">${SIZE[k].sub}</span></td><td>걸리는 시간 ×${SIZE[k].lo}~${SIZE[k].hi}</td><td class="xs muted">추정</td></tr>`).join("")}
     ${["thin","normal","thick"].map(k => `<tr><td>두께 ${THICK[k].lab}</td><td>걸리는 시간 ×${THICK[k].lo}~${THICK[k].hi}</td><td class="xs muted">추정</td></tr>`).join("")}
-    ${["dry","humid"].map(k => `<tr><td>공기 ${ENV[k].lab}</td><td>마르는 속도 ×${ENV[k].lo}~${ENV[k].hi}</td><td class="xs muted">추정 · 습도가 건조 속도에 가장 큰 영향</td></tr>`).join("")}
+    ${Object.keys(ENV).map(k => `<tr><td>공기 ${ENV[k].lab} <span class="xs muted">${ENV[k].range}</span></td><td>마르는 속도 ×${ENV[k].lo}~${ENV[k].hi}</td><td class="xs muted">${k === "normal" ? "기준" : "추정 · EXP-005(습도 70%에서 16.6시간)를 보고 효과를 약하게 잡음"}</td></tr>`).join("")}
   </tbody></table></div><p class="xs muted">흙 목록: ${getClays().map(c => esc(c.name)).join(", ")}. 흙은 기물 등록·수정 화면에서 추가할 수 있어요.</p></section>
   <div class="section-h"><h2>실험 기록</h2></div>
   <div class="list">${EXPS.map(e => `<details class="exp"><summary><span><span class="mono xs muted">${e.id}</span><br><b style="font-weight:500">${e.title}</b></span><span class="chip">${e.status}</span></summary><ul>${e.body.map(b => `<li>${b}</li>`).join("")}</ul><p class="small" style="margin:6px 0 0"><b>확인된 점</b> · ${e.fact}</p></details>`).join("")}</div>
@@ -1310,7 +1381,7 @@ function lab(now){
 
 function checkinView(now){
   const C = V.checkin, pots = POTS.filter(isDrying).sort((a, b) => a.formedAt - b.formedAt);
-  const envRow = `<div class="row" style="gap:6px"><span class="small muted">작업실 공기</span>${Object.entries(ENV).map(([k, v]) => `<button class="chipbtn" data-act="setEnv" data-env="${k}" aria-pressed="${getEnv() === k}">${v.lab}</button>`).join("")}</div>`;
+  const envRow = envLine();
   const head = `<div class="detail-top"><button class="btn sm ghost" data-act="ciClose">← 닫기</button></div>
     <header class="top" style="margin-top:4px"><div class="brand"><span class="eyebrow">작업실 체크인</span><h1>만져 본 기물을 골라요</h1>
     <span class="tag">굽·바닥 기준으로 하나씩 눌러 주세요. 안 누른 기물은 기록하지 않아요. 보관을 바꾼 기물은 작업실 카드의 📦 보관으로 기록해요.</span></div></header>`;
@@ -1320,6 +1391,7 @@ function checkinView(now){
     return head + `<section class="panel">${envRow}</section><div class="ci-list">${pots.map(p => {
       const P = predict(p, now), sel = C.sel[p.id];
       return `<div class="ci-row ${sel ? "picked" : ""}"><div class="ci-top"><div class="ch-wrap st-${P.state}">${potSVG(p.kind, P.state, {paused:P.paused, still:true})}</div><div style="min-width:0"><b>${esc(p.name)}</b><div class="xs muted">예상: ${ST[P.state].e} ${ST[P.state].lab} · ${esc(storageLabel(P.cur))}</div></div></div>
+        ${isLabPot(p) ? `<div class="row" style="margin:6px 0 2px"><label class="small muted" for="ci-w-${esc(p.id)}">🧪 무게 (g)</label><input type="number" id="ci-w-${esc(p.id)}" data-ciw="${esc(p.id)}" min="1" step="0.5" inputmode="decimal" value="${esc((C.w && C.w[p.id]) || "")}" placeholder="만지기 전에" style="flex:1;min-width:0;max-width:140px"></div>` : ""}
         <div class="ci-btns">${QUICK.map(([lv, e, l]) => `<button class="qbtn" data-act="ciPick" data-id="${esc(p.id)}" data-lv="${lv}" aria-pressed="${sel === lv}">${e}<small>${l}</small></button>`).join("")}<button class="qbtn" data-act="ciPick" data-id="${esc(p.id)}" data-lv="trim" aria-pressed="${sel === "trim"}">🔪<small>깎았음</small></button></div></div>`;
     }).join("")}</div>
     <div class="ci-foot"><button class="btn" data-act="ciClose">취소</button><button class="btn primary" data-act="ciSave" ${picked ? "" : "disabled"}>${picked ? `저장 (${picked}개)` : "기물을 골라 주세요"}</button></div>`;
@@ -1334,8 +1406,9 @@ async function saveCheckin(){
     if(!isDrying(p)) continue;
     const lv = C.sel[p.id];
     if(!lv) continue;
-    if(lv === "trim"){ p.status = "trimmed"; p.events.push({id:uid(), type:"trim", at:now}); nTrim++; }
-    else if(lv){ p.events.push({id:uid(), type:"obs", at:now, approxH:0, level:lv, rim:"same", note:"", pred:predSnap(p, now)}); nObs++; }
+    const w = C.w && parseFloat(C.w[p.id]) > 0 ? Math.round(parseFloat(C.w[p.id]) * 10) / 10 : null;
+    if(lv === "trim"){ const te = {id:uid(), type:"trim", at:now}; if(w && p.lab) te.wBefore = w; p.status = "trimmed"; p.events.push(te); nTrim++; }
+    else if(lv){ const oe = {id:uid(), type:"obs", at:now, approxH:0, level:lv, rim:"same", note:"", pred:predSnap(p, now)}; if(w && p.lab) oe.w = w; p.events.push(oe); nObs++; }
     p.updatedAt = now;
   }
   V.checkin = null; saveLocal(); render(); window.scrollTo(0, 0);
@@ -1444,13 +1517,16 @@ function accountSheet(){
       <button class="btn" data-act="copyBk">📋 백업을 텍스트로 복사</button>
       <button class="btn" data-act="pasteBk">📋 복사한 백업 붙여넣기</button>
       ${NATIVE ? `<button class="btn" data-act="toggleNotify">${lsGet(notifyKey(USER.id), false) ? "🔔 굽깎기 알림 켜짐 · 끄기" : "🔕 굽깎기 알림 꺼짐 · 켜기"}</button>` : ""}
+      ${NATIVE && lsGet(notifyKey(USER.id), false) ? `<button class="btn" data-act="testNotify">🧪 1분 뒤 테스트 알림 받기</button>` : ""}
+      <button class="btn" data-act="toggleLab">${isLab() ? "🧪 실험 모드 켜짐 · 끄기" : "🧪 실험 모드 켜기"}</button>
+      ${isLab() ? `<button class="btn" data-act="exportLab">📊 실험 기록 내보내기 (CSV · 실험 기물 ${POTS.filter(p => p.lab).length}개)</button>` : ""}
       <button class="btn" data-act="logout">🚪 로그아웃</button>
       <button class="btn" style="color:var(--urgent)" data-act="askDelUser">이 사용자와 기록 모두 삭제</button>
     </div>
     ${V.data.delUser ? `<form id="f-deluser" class="confirm-box" autocomplete="off">되돌릴 수 없어요. PIN을 입력하면 삭제돼요.
       <input class="pin-input" style="margin-top:8px" type="password" id="d-pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" aria-label="PIN">
       <div class="row" style="margin-top:8px"><button type="submit" class="btn sm terra">삭제하기</button></div></form>` : ""}
-    <p class="hint" style="margin-top:14px">기록은 이 기기에만 있어요. 앱을 지우거나 웹사이트 데이터를 지우면 같이 사라질 수 있으니 가끔 백업 파일을 저장해 두세요.</p><p class="hint">다른 기기나 다른 버전으로 기록을 옮길 때는 ‘백업을 텍스트로 복사’ → 옮길 곳에서 ‘복사한 백업 붙여넣기’를 쓰면 돼요.</p>${NATIVE ? `<p class="hint">알림은 예상 적정 구간 2시간 전, 시작 무렵, 종료 3시간 전에 와요. 서버 없이 이 아이폰 안에서만 예약돼요. 위젯에는 ‘위젯에 표시’로 고른 기물이나 묶음이, 고르지 않으면 내 작업실 전체가 보여요.</p>` : ""}
+    <p class="hint" style="margin-top:14px">기록은 이 기기에만 있어요. 앱을 지우거나 웹사이트 데이터를 지우면 같이 사라질 수 있으니 가끔 백업 파일을 저장해 두세요.</p>${isLab() ? `<p class="hint">실험 모드: 기물을 등록할 때 '실험 기물'로 고르면 무게·바닥 두께를 기록해요. 상태를 누르면 무게를 묻고, 굽깎기 때는 깎기 전·후 무게, 초벌 때는 마른 무게를 물어요. 내보낸 CSV 파일은 엑셀로 열려요.</p>` : ""}<p class="hint">다른 기기나 다른 버전으로 기록을 옮길 때는 ‘백업을 텍스트로 복사’ → 옮길 곳에서 ‘복사한 백업 붙여넣기’를 쓰면 돼요.</p>${NATIVE ? `<p class="hint">알림은 예상 적정 구간 2시간 전, 시작 무렵, 종료 3시간 전에 와요. 서버 없이 이 아이폰 안에서만 예약돼요. 위젯에는 ‘위젯에 표시’로 고른 기물이나 묶음이, 고르지 않으면 내 작업실 전체가 보여요.</p>` : ""}
     <div class="sheet-acts"><button class="btn" data-act="close">닫기</button></div></div>`;
 }
 function sheetHtml(){
@@ -1467,6 +1543,10 @@ function sheetHtml(){
       <label class="check" for="a-autob"><input type="checkbox" id="a-autob" checked>2개 이상이면 묶음으로 묶기</label></div>
     <h3 style="margin-top:16px;font-size:15px">처음 보관</h3>
     ${storageFields("a-", {container:"none", seal:"partial", orient:"flip"})}
+    ${isLab() ? `<div class="field labbox"><label class="check" for="a-lab"><input type="checkbox" id="a-lab" checked>🧪 실험 기물로 등록</label>
+      <label for="a-exp" class="small muted">실험 이름</label><input type="text" id="a-exp" maxlength="20" value="${esc((prefs && prefs.exp) || "EXP-006")}">
+      <span class="hint">떼어 낸 직후 무게(받침판 무게 빼고)와 바닥 두께(바늘을 안쪽 바닥에 꽂아 묻은 길이). 모르면 비워 두세요.</span>
+      <div id="a-labrows">${[1,2,3,4,5,6].map(k => `<div class="row labrow" data-k="${k}" ${k > 1 ? "hidden" : ""}><span class="small muted" style="width:22px">${k}</span><input type="number" id="a-w-${k}" min="1" step="1" inputmode="decimal" placeholder="무게 g" style="flex:1;min-width:0"><input type="number" id="a-b-${k}" min="1" step="0.5" inputmode="decimal" placeholder="바닥 mm" style="flex:1;min-width:0"></div>`).join("")}</div></div>` : ""}
     <p class="hint" style="margin-top:12px">${summaryLine}</p>
     <details class="more"><summary>상세 정보 바꾸기</summary>
       <div class="field"><label for="a-name">이름 (선택)</label><input type="text" id="a-name" maxlength="30" placeholder="${esc(nextAutoName(kind))} (자동)"></div>
@@ -1499,14 +1579,21 @@ function sheetHtml(){
   if(V.sheet === "obsMore"){
     const pot = POTS.find(p => p.id === V.data.id), ev = pot && pot.events.find(e => e.id === V.data.ev);
     if(!ev) return "";
-    return `<form class="sheet" id="f-obsmore" role="dialog" aria-label="기록 더 적기"><h2>${OBS[ev.level].e} ${esc(pot.name)} · ${OBS[ev.level].lab}</h2><p class="hint">선택 항목이에요. 안 적어도 괜찮아요.</p>
+    return `<form class="sheet" id="f-obsmore" role="dialog" aria-label="기록 더 적기"><h2>${OBS[ev.level].e} ${esc(pot.name)} · ${OBS[ev.level].lab}</h2><p class="hint">${isLabPot(pot) ? "🧪 실험 기물이에요. 만지기 전에 잰 무게를 넣어 주세요." : "선택 항목이에요. 안 적어도 괜찮아요."}</p>
+      ${isLabPot(pot) ? (() => { const lw = lastWeight(pot); return `<div class="field"><label for="m-w">무게 (g)</label><input type="number" id="m-w" min="1" step="0.5" inputmode="decimal" value="${ev.w ?? ""}" placeholder="예: 331"><span class="hint">${[pot.w0 ? `성형 ${pot.w0}g` : "", lw && lw.id !== ev.id ? `지난번 ${lw.w}g (${fmt(lw.at)})` : ""].filter(Boolean).join(" · ") || "받침판 무게는 빼고 적어 주세요."}</span></div>`; })() : ""}
       <div class="field"><span class="lab">입구는?</span>${segInput("m-rim", RIM, ev.rim || "same")}</div>
       <div class="field"><label for="m-note">메모</label><textarea id="m-note">${esc(ev.note || "")}</textarea></div>
       <div class="sheet-acts"><button type="button" class="btn" data-act="close">닫기</button><button type="submit" class="btn primary">저장</button></div></form>`;
   }
-  if(V.sheet === "env") return `<div class="sheet" role="dialog" aria-label="작업실 환경"><h2>🌡️ 작업실 공기는 어때요?</h2><p class="hint">공기가 건조하면 더 빨리, 습하면 더 천천히 마르게 계산해요. 지금부터 건조 중인 모든 기물에 적용돼요. 난방을 켜고 끄거나 장마철처럼 평소와 다를 때만 바꾸면 돼요.</p>
-    <div class="acct-list">${Object.entries(ENV).map(([k, v]) => `<button class="btn" data-act="setEnv" data-env="${k}" ${getEnv() === k ? 'style="border-color:var(--terracotta);font-weight:600"' : ""}>${k === "dry" ? "🔥" : k === "humid" ? "💧" : "🌤️"} ${v.lab}${getEnv() === k ? " · 지금" : ""}</button>`).join("")}</div>
-    <div class="sheet-acts"><button class="btn" data-act="close">닫기</button></div></div>`;
+  if(V.sheet === "env"){
+    const r = getEnvReading() || {};
+    return `<form class="sheet" id="f-env" role="dialog" aria-label="작업실 공기"><h2>🌡️ 작업실 공기는 어때요?</h2><p class="hint">건조하면 더 빨리, 습하면 더 천천히 마르게 계산해요. 저장하면 지금부터 건조 중인 모든 기물에 적용돼요.</p>
+      <div class="field"><span class="lab">습도계가 있다면 (선택)</span>
+        <div class="row" style="align-items:flex-start"><label style="flex:1;min-width:0" class="small muted">습도 (%)<input type="number" id="v-rh" min="0" max="100" step="1" inputmode="numeric" placeholder="예: 60" value="${r.rh ?? ""}" style="width:100%;margin-top:4px"></label><label style="flex:1;min-width:0" class="small muted">온도 (°C)<input type="number" id="v-temp" min="-10" max="50" step="0.1" inputmode="decimal" placeholder="예: 20" value="${r.temp ?? ""}" style="width:100%;margin-top:4px"></label></div>
+        <span class="hint">습도를 넣으면 아래 단계가 자동으로 골라져요. 젖은 흙이나 밀폐 상자 바로 옆은 피해서 재 주세요.</span></div>
+      <div class="field"><span class="lab">단계</span><div class="obs-opts">${Object.entries(ENV).map(([k, v]) => `<input type="radio" name="v-lv" id="v-lv-${k}" value="${k}" ${getEnv() === k ? "checked" : ""}><label for="v-lv-${k}"><span class="e">${v.e}</span><b style="font-weight:500">${v.lab}</b><span class="s">습도 ${v.range} · 마르는 속도 ×${v.mid}</span></label>`).join("")}</div></div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">저장</button></div></form>`;
+  }
   if(V.sheet === "edit"){
     const pot = POTS.find(p => p.id === V.data.id); if(!pot) return "";
     return `<form class="sheet" id="f-edit" role="dialog" aria-label="기물 정보 수정"><h2>기물 정보 수정</h2><p class="hint">흙, 크기, 두께를 바꾸면 예측을 다시 계산해요. 기록 타임라인은 그대로예요.</p>
@@ -1514,6 +1601,9 @@ function sheetHtml(){
       <div class="field"><span class="lab">종류</span>${segInput("e-kind", KIND, pot.kind || "other")}</div>
       <div class="field"><label for="e-count">개수 (선택)</label><input type="number" id="e-count" min="1" max="50" value="${pot.count || ""}"></div>
       ${clayFields("e-", pot)}
+      ${isLab() ? `<div class="field labbox"><label class="check" for="e-lab"><input type="checkbox" id="e-lab" ${pot.lab ? "checked" : ""}>🧪 실험 기물</label>
+        <div class="row"><input type="text" id="e-exp" maxlength="20" placeholder="실험 이름" value="${esc(pot.exp || "")}" style="flex:1;min-width:0"></div>
+        <div class="row" style="align-items:flex-start;margin-top:6px"><label style="flex:1;min-width:0" class="small muted">성형 무게 (g)<input type="number" id="e-w0" min="1" step="0.5" inputmode="decimal" value="${pot.w0 ?? ""}" style="width:100%;margin-top:4px"></label><label style="flex:1;min-width:0" class="small muted">바닥 (mm)<input type="number" id="e-base" min="1" step="0.5" inputmode="decimal" value="${pot.baseMm ?? ""}" style="width:100%;margin-top:4px"></label><label style="flex:1;min-width:0" class="small muted">마른 무게 (g)<input type="number" id="e-dry" min="1" step="0.5" inputmode="decimal" value="${pot.dryG ?? ""}" style="width:100%;margin-top:4px"></label></div></div>` : ""}
       <div class="field"><label for="e-note">메모 (선택)</label><textarea id="e-note">${esc(pot.note || "")}</textarea></div>
       <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">저장</button></div></form>`;
   }
@@ -1524,11 +1614,19 @@ function sheetHtml(){
         <div class="times"><input type="time" id="vs-${d}" value="${r ? r.start : "19:00"}" aria-label="${WD[d]} 시작"><span>~</span><input type="time" id="ve-${d}" value="${r ? r.end : "22:00"}" aria-label="${WD[d]} 끝"></div></div>`; }).join("")}
       <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">저장</button></div></form>`;
   }
+  if(V.sheet === "labTrim"){
+    const pot = POTS.find(p => p.id === V.data.id); if(!pot) return "";
+    return `<form class="sheet" id="f-labtrim" role="dialog" aria-label="굽깎기 기록"><h2>🎉 ${esc(pot.name)} · 굽깎기</h2><p class="hint">🧪 실험 기물이에요. 깎기 직전과 직후 무게를 넣어 주세요. 모르면 비워 둬도 돼요.</p>
+      <div class="row" style="align-items:flex-start"><label style="flex:1;min-width:0" class="small muted">깎기 전 (g)<input type="number" id="t-wb" min="1" step="0.5" inputmode="decimal" style="width:100%;margin-top:4px"></label><label style="flex:1;min-width:0" class="small muted">깎은 후 (g)<input type="number" id="t-wa" min="1" step="0.5" inputmode="decimal" style="width:100%;margin-top:4px"></label></div>
+      <div class="field" style="margin-top:12px"><label for="t-note">메모 (선택)</label><textarea id="t-note" placeholder="예: 리본처럼 잘 깎임"></textarea></div>
+      <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">굽깎기 완료</button></div></form>`;
+  }
   if(V.sheet === "stage"){
     const pot = POTS.find(p => p.id === V.data.id), st = pot ? STAGES[stageOf(pot)] : null;
     if(!pot || !st || !st.next) return "";
     const nx = STAGES[st.next];
     return `<form class="sheet" id="f-stage" role="dialog" aria-label="다음 단계"><h2>${nx.e} ${esc(pot.name)} · ${nx.lab}</h2><p class="hint">${josa(st.wait, "을", "를")} 마친 날을 기록하면 다마고치가 다음 모습으로 자라요.</p>
+      ${isLabPot(pot) && st.next === "bisque" ? `<div class="field"><label for="g-dry">🧪 완전히 마른 무게 (g)</label><input type="number" id="g-dry" min="1" step="0.5" inputmode="decimal" value="${pot.dryG ?? ""}" placeholder="초벌 들어가기 직전에 잰 무게"><span class="hint">이게 있어야 지난 무게를 모두 함수율(마른 흙 대비 물 %)로 바꿀 수 있어요.</span></div>` : ""}
       ${timeFields("g-", Date.now(), "마친 시각")}
       <div class="field"><label for="g-note">메모 (선택)</label><textarea id="g-note" placeholder="${st.next === "glazed" ? "예: 유약 이름, 담금 횟수" : "예: 공방 가마, 온도"}"></textarea></div>
       <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">기록하기</button></div></form>`;
@@ -1538,6 +1636,7 @@ function sheetHtml(){
   if(V.sheet === "obs") return `<form class="sheet" id="f-obs" role="dialog" aria-label="상태 기록"><h2>${esc(pot.name)} 상태 기록</h2><p class="hint">손끝으로 몸통과 바닥을 눌러 보고 가장 가까운 것을 골라 주세요.</p>
     ${timeFields("o-", now, "확인한 시각")}
     <div class="field"><span class="lab">굽·바닥 상태</span><span class="hint">굽을 깎을 수 있는지는 바닥 쪽이 기준이에요. 바닥을 눌러 보고 골라 주세요.</span><div class="obs-opts">${Object.entries(OBS).map(([k, o], i) => `<input type="radio" name="o-level" id="o-${k}" value="${k}" ${i === 0 ? "required" : ""}><label for="o-${k}"><span class="e">${o.e}</span><b style="font-weight:500">${o.lab}</b><span class="s">${o.sub}</span></label>`).join("")}</div></div>
+    ${isLabPot(pot) ? `<div class="field"><label for="o-w">🧪 무게 (g)</label><input type="number" id="o-w" min="1" step="0.5" inputmode="decimal" placeholder="만지기 전에 잰 무게"></div>` : ""}
     <div class="field"><span class="lab">입구는?</span>${segInput("o-rim", RIM, "same")}</div>
     <div class="field"><label for="o-note">메모 (선택)</label><textarea id="o-note" placeholder="예: 손잡이 붙일 자리도 적당함"></textarea></div>
     <div class="sheet-acts"><button type="button" class="btn" data-act="close">취소</button><button type="submit" class="btn primary">기록하기</button></div>
@@ -1597,6 +1696,7 @@ document.addEventListener("click", async ev => {
       const lv = el.dataset.lv, now = Date.now(), evId = uid();
       pot.events.push({id:evId, type:"obs", at:now, approxH:0, level:lv, rim:"same", note:"", pred:predSnap(pot, now)});
       pot.updatedAt = now; saveLocal(); render();
+      if(isLabPot(pot)){ openSheet("obsMore", {id, ev:evId}); const w = document.getElementById("m-w"); if(w) w.focus(); break; }
       toast(`${OBS[lv].e} ${pot.name} · ${OBS[lv].lab}`, {label:"입구·메모 더 적기", fn:() => openSheet("obsMore", {id, ev:evId})});
       break;
     }
@@ -1624,6 +1724,25 @@ document.addEventListener("click", async ev => {
       if(V.sheet === "account") $sheet.innerHTML = `<div class="scrim" data-act="scrim">${sheetHtml()}</div>`;
       break;
     }
+    case "testNotify": {
+      if(!LN) break;
+      try {
+        await LN.schedule({notifications:[{id:TEST_NOTI_ID, title:"🧪 Claygotchi 테스트", body:"알림이 잘 와요. 실제 알림은 굽깎기 예상 구간에 맞춰 와요.", schedule:{at:new Date(Date.now() + 60000), allowWhileIdle:true}}]});
+        toast("1분 뒤에 알림이 와요. 앱을 닫고 기다려 보세요.");
+      } catch { toast("알림 예약에 실패했어요. 설정 → Claygotchi → 알림을 확인해 주세요."); }
+      break;
+    }
+    case "toggleLab": {
+      if(!USER) break; lsSet(labKey(USER.id), !isLab());
+      toast(isLab() ? "🧪 실험 모드를 켰어요. 새 기물을 '실험 기물'로 등록해 보세요." : "실험 모드를 껐어요. 기록은 그대로예요.");
+      $sheet.innerHTML = `<div class="scrim" data-act="scrim">${sheetHtml()}</div>`; render(); break;
+    }
+    case "exportLab": {
+      if(!POTS.some(p => p.lab)){ toast("아직 실험 기물이 없어요."); break; }
+      const d = new Date(), name = `claygotchi-실험-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.csv`;
+      if(await shareFile(name, new Blob([labCsv()], {type:"text/csv"}), "Claygotchi 실험 기록")) toast("실험 기록 파일을 만들었어요. 엑셀로 열려요.");
+      break;
+    }
     case "newBatch": openSheet("batch", {}); break;
     case "editBatch": openSheet("batch", {bid:V.batch}); break;
     case "delBatch": {
@@ -1641,13 +1760,7 @@ document.addEventListener("click", async ev => {
     case "exportBk": {
       const d = new Date(), name = `claygotchi-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
       const blob = new Blob([JSON.stringify({app:"claygotchi", v:1, exportedAt:Date.now(), pots:POTS, batches:BATCHES, clays:userClays()}, null, 1)], {type:"application/json"});
-      try {
-        const file = new File([blob], name, {type:"application/json"});
-        if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:"Claygotchi 백업"}); break; }
-      } catch(e){ if(e && e.name === "AbortError") break; }
-      const url = URL.createObjectURL(blob), a = document.createElement("a");
-      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 4000); toast("백업 파일을 만들었어요."); break;
+      if(await shareFile(name, blob, "Claygotchi 백업")) toast("백업 파일을 만들었어요."); break;
     }
     case "copyBk": case "copyBkAgain": {
       const text = act === "copyBk" ? backupText() : V.data.text;
@@ -1666,6 +1779,7 @@ document.addEventListener("click", async ev => {
     }
     case "trim": {
       const pot = POTS.find(p => p.id === id); if(!pot) return;
+      if(isLabPot(pot)){ openSheet("labTrim", {id}); const w = document.getElementById("t-wb"); if(w) w.focus(); break; }
       const c = JSON.parse(JSON.stringify(pot)); c.status = "trimmed"; c.events.push({id:uid(), type:"trim", at:Date.now()});
       closeSheet(); await savePot(c); toast("굽깎기 완료! 🎉"); break;
     }
@@ -1711,6 +1825,13 @@ document.addEventListener("change", ev => {
   const m = t.name && t.name.match(/^(a-|s-)cont$/);
   if(m){ const hide = t.value === "none"; const f = t.form; f.querySelector("#" + m[1] + "sealRow").hidden = hide; f.querySelector("#" + m[1] + "orRow").hidden = hide; }
 });
+document.addEventListener("input", ev => {
+  if(ev.target.dataset && ev.target.dataset.ciw && V.checkin){ (V.checkin.w = V.checkin.w || {})[ev.target.dataset.ciw] = ev.target.value; return; }
+  if(ev.target.closest && ev.target.closest("#f-add") && ev.target.name === "a-n"){ const n = parseInt(ev.target.value, 10) || 1; document.querySelectorAll("#a-labrows .labrow").forEach(r => { r.hidden = Number(r.dataset.k) > n; }); }
+  if(ev.target.id !== "v-rh") return;
+  const rh = parseFloat(ev.target.value);
+  if(isFinite(rh)){ const r = document.getElementById("v-lv-" + envOfRH(rh)); if(r) r.checked = true; }
+});
 document.addEventListener("submit", async ev => {
   ev.preventDefault();
   const f = ev.target, now = Date.now();
@@ -1722,6 +1843,11 @@ document.addEventListener("submit", async ev => {
     const info = readClayInfo(f, "e-"); if(info.error){ toast(info.error); return; }
     const cnt = parseInt(f.querySelector("#e-count").value, 10);
     const c = {...JSON.parse(JSON.stringify(pot)), name, kind:radio(f, "e-kind") || pot.kind, count:isFinite(cnt) ? cnt : null, note:f.querySelector("#e-note").value.trim(), ...info};
+    if(f.querySelector("#e-lab")){
+      if(f.querySelector("#e-lab").checked){ c.lab = true; c.exp = f.querySelector("#e-exp").value.trim() || c.exp || "실험"; }
+      else delete c.lab;
+      for(const [sel, key] of [["#e-w0", "w0"], ["#e-base", "baseMm"], ["#e-dry", "dryG"]]){ const v = numIn(f, sel); if(v) c[key] = v; else delete c[key]; }
+    }
     closeSheet(); await savePot(c); toast("기물 정보를 바꿨어요. 예측을 다시 계산했어요."); return;
   }
   if(f.id === "f-visits"){
@@ -1734,6 +1860,13 @@ document.addEventListener("submit", async ev => {
     }
     lsSet(visitsKey(USER.id), rules); V.planT = null; closeSheet(); render(); toast(rules.length ? "방문 가능 일정을 저장했어요." : "방문 가능 일정을 비웠어요."); return;
   }
+  if(f.id === "f-labtrim"){
+    const pot = POTS.find(p => p.id === V.data.id); if(!pot) return;
+    const c = JSON.parse(JSON.stringify(pot)); c.status = "trimmed";
+    const te = {id:uid(), type:"trim", at:Date.now(), note:f.querySelector("#t-note").value.trim()};
+    const wb = numIn(f, "#t-wb"), wa = numIn(f, "#t-wa"); if(wb) te.wBefore = wb; if(wa) te.wAfter = wa;
+    c.events.push(te); closeSheet(); await savePot(c); toast("굽깎기 완료! 🎉"); return;
+  }
   if(f.id === "f-stage"){
     const pot = POTS.find(p => p.id === V.data.id); if(!pot) return;
     const st = STAGES[stageOf(pot)]; if(!st || !st.next) return;
@@ -1741,7 +1874,9 @@ document.addEventListener("submit", async ev => {
     let at = atOf("g-"); if(Date.now() - at < 60000) at = Date.now();
     const prevAt = Math.max(0, ...c.events.filter(e => e.type === "trim" || e.type === "stage").map(e => e.at));
     if(at <= prevAt) at = prevAt + 1000;
-    c.events.push({id:uid(), type:"stage", to:st.next, at, approxH:apxOf("g-"), note:f.querySelector("#g-note").value.trim()});
+    const se = {id:uid(), type:"stage", to:st.next, at, approxH:apxOf("g-"), note:f.querySelector("#g-note").value.trim()};
+    { const d = numIn(f, "#g-dry"); if(d){ se.dryG = d; c.dryG = d; } }
+    c.events.push(se);
     closeSheet(); await savePot(c); toast(`${STAGES[st.next].e} ${STAGES[st.next].lab}! 한 단계 자랐어요.`); return;
   }
   if(f.id === "f-batch"){
@@ -1790,6 +1925,7 @@ document.addEventListener("submit", async ev => {
     V.data = {}; signOut(); toast("사용자와 기록을 삭제했어요."); return;
   }
   if(f.id === "f-add"){
+    const prefs0 = lsGet(prefsKey(USER.id), null);
     const kind = radio(f, "a-kind") || "other", n = Math.max(1, Math.min(6, parseInt(radio(f, "a-n") || "1", 10)));
     const info = readClayInfo(f, "a-"); if(info.error){ toast(info.error); return; }
     const st = readStorage(f, "a-");
@@ -1800,16 +1936,29 @@ document.addEventListener("submit", async ev => {
       bid = "b" + randHex(6); BATCHES.push({id:bid, name:bn, createdAt:now}); saveBatches();
     }
     const note = f.querySelector("#a-note").value.trim(), names = [];
+    const labOn = isLab() && !!(f.querySelector("#a-lab") && f.querySelector("#a-lab").checked);
+    const expName = labOn ? (f.querySelector("#a-exp").value.trim() || "실험") : null;
     for(let k = 0; k < n; k++){
       const name = typed ? (n > 1 ? `${typed} ${k + 1}` : typed) : nextAutoName(kind, 0);
       const events = [{id:uid(), type:"storage", at, approxH:apx, ...st}];
       if(env !== "normal") events.push({id:uid(), type:"env", at, env});
-      POTS.push({id:uid(), name, batchId:bid, kind, ...info, count:null, note, formedAt:at, formedApproxH:apx, status:"active", createdAt:now, updatedAt:now, events});
+      const pot = {id:uid(), name, batchId:bid, kind, ...info, count:null, note, formedAt:at, formedApproxH:apx, status:"active", createdAt:now, updatedAt:now, events};
+      if(labOn){ pot.lab = true; pot.exp = expName; const w = numIn(f, `#a-w-${k + 1}`), b = numIn(f, `#a-b-${k + 1}`); if(w) pot.w0 = w; if(b) pot.baseMm = b; }
+      POTS.push(pot);
       names.push(name);
     }
-    lsSet(prefsKey(USER.id), {kind, clayBodyId:info.clayBodyId, size:info.size, thick:info.thick, clay:info.clay});
+    lsSet(prefsKey(USER.id), {kind, clayBodyId:info.clayBodyId, size:info.size, thick:info.thick, clay:info.clay, exp:expName || (prefs0 && prefs0.exp) || undefined});
     closeSheet(); saveLocal(); V.detail = null; V.checkin = null; V.tab = "studio"; render();
     toast(n > 1 ? `${names[0]} 외 ${n - 1}개 탄생! 🏺` : `${names[0]} 탄생! 🏺`); return;
+  }
+  if(f.id === "f-env"){
+    const num = id => { const n = parseFloat(f.querySelector(id).value); return isFinite(n) ? Math.round(n * 10) / 10 : null; };
+    const rh = num("#v-rh"), temp = num("#v-temp");
+    if(rh != null && (rh < 0 || rh > 100)){ toast("습도는 0~100% 사이로 넣어 주세요."); return; }
+    const lv = rh != null ? envOfRH(rh) : (radio(f, "v-lv") || "normal");
+    const reading = rh != null || temp != null ? {rh, temp} : null;
+    closeSheet(); await setStudioEnv(lv, reading);
+    toast(`🌡️ 작업실 공기: ${ENV[lv].lab}${reading ? ` (${readingText(reading)})` : ""}`); return;
   }
   if(f.id === "f-paste"){
     const text = f.querySelector("#p-text").value.trim(); if(!text){ toast("백업 텍스트를 붙여 넣어 주세요."); return; }
@@ -1820,7 +1969,8 @@ document.addEventListener("submit", async ev => {
   if(f.id === "f-obsmore"){
     const pot = POTS.find(p => p.id === V.data.id), ev = pot && pot.events.find(e => e.id === V.data.ev); if(!ev) return;
     ev.rim = radio(f, "m-rim") || "same"; ev.note = f.querySelector("#m-note").value.trim(); pot.updatedAt = Date.now();
-    closeSheet(); saveLocal(); render(); toast("기록에 더했어요."); return;
+    if(f.querySelector("#m-w")){ const w = numIn(f, "#m-w"); if(w) ev.w = w; else delete ev.w; }
+    closeSheet(); saveLocal(); render(); toast(ev.w ? `기록했어요 · ${wInfo(pot, ev.w)}` : "기록에 더했어요."); return;
   }
   if(f.id === "f-obs"){
     const level = radio(f, "o-level"); if(!level){ toast("상태를 하나 골라 주세요."); return; }
@@ -1828,7 +1978,9 @@ document.addEventListener("submit", async ev => {
     const at = atOf("o-"), P = predict(pot, at);
     const pred = P.st ? {fast:P.st.fast, mid:P.st.mid, slow:P.st.slow, state:P.state, conf:P.conf} : null;
     const c = JSON.parse(JSON.stringify(pot));
-    c.events.push({id:uid(), type:"obs", at, approxH:apxOf("o-"), level, rim:radio(f, "o-rim") || "same", note:f.querySelector("#o-note").value.trim(), pred});
+    const pred2 = predSnap(pot, at) || pred, oe = {id:uid(), type:"obs", at, approxH:apxOf("o-"), level, rim:radio(f, "o-rim") || "same", note:f.querySelector("#o-note").value.trim(), pred:pred2};
+    { const w = numIn(f, "#o-w"); if(w) oe.w = w; }
+    c.events.push(oe);
     closeSheet(); await savePot(c); toast("기록했어요. 예상 구간을 다시 계산했어요.");
   }
   if(f.id === "f-store"){

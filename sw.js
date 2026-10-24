@@ -1,5 +1,5 @@
 // Claygotchi 오프라인 캐시. build_web.py가 만들 때마다 버전이 바뀌어 새 화면으로 갱신된다.
-const VERSION = "claygotchi-202610232356";
+const VERSION = "claygotchi-202610241951";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
