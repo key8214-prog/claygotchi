@@ -397,19 +397,19 @@ function rateOf(st){
   if(c === "unknown" || s === "unknown") return {lo:0, mid:.4, hi:1.1, ev:"보관 조건이 기록되지 않음", grade:"unk"};
   if(s === "sealed"){
     if(c === "plastic") return {lo:0, mid:.02, hi:.05, ev:"EXP-004: 7일 후에도 거의 그대로", grade:"ok"};
-    if(c === "styro") return {lo:0, mid:.04, hi:.1, ev:"추정 · EXP-002 결과 대기 중", grade:"est"};
+    if(c === "styro") return {lo:0, mid:.04, hi:.1, ev:"EXP-002: 2일 동안 거의 안 마름", grade:"ok"};
     if(c === "vinyl") return {lo:.01, mid:.06, hi:.15, ev:"추정 · 실험 없음", grade:"est"};
     return {lo:.03, mid:.12, hi:.3, ev:"추정 · 종이 박스는 수분을 흡수할 수 있음", grade:"est"};
   }
   if(s === "closed") return {lo:.05, mid:.2, hi:.4, ev:"추정 · 실험 없음", grade:"est"};
-  return {lo:.15, mid:.35, hi:.6, ev:"추정 · EXP-002 결과 대기 중", grade:"est"};
+  return {lo:.15, mid:.35, hi:.6, ev:"추정 · EXP-002에선 약 15%로 느린 쪽", grade:"est"};
 }
 const OBS = {
-  soaked:{lab:"많이 축축해요", sub:"슬립이 묻어나요. 누르면 쉽게 자국이 남아요.", kind:"f", r:{lo:.1, mid:.35, hi:.55}, e:"💧", st:"WET"},
-  damp:{lab:"조금 축축해요", sub:"손에 묻진 않지만 깎으면 물러서 형태가 밀려요.", kind:"f", r:{lo:.6, mid:.78, hi:.95}, e:"🌱", st:"DRYING"},
-  ready:{lab:"딱 좋아요", sub:"가죽 경도. 깎으면 리본처럼 말려 나와요.", kind:"g", r:{lo:.1, mid:.35, hi:.6}, e:"✨", st:"READY"},
-  firm:{lab:"조금 단단해요", sub:"깎이긴 하지만 부스러기가 짧게 끊겨요.", kind:"g", r:{lo:.7, mid:.82, hi:.95}, e:"🚨", st:"URGENT"},
-  over:{lab:"너무 말랐어요", sub:"색이 밝아지고 깎으면 가루만 나와요.", terminal:true, e:"🪨", st:"OVERDRIED"}
+  soaked:{lab:"많이 축축해요", sub:"슬립이 묻어나요. 손가락으로 누르면 쑥 들어가요.", kind:"f", r:{lo:.03, mid:.15, hi:.3}, e:"💧", st:"WET"},
+  damp:{lab:"조금 축축해요", sub:"손에 묻진 않지만 말랑해요. 누르면 자국이 남고, 깎으면 형태가 밀려요.", kind:"f", r:{lo:.25, mid:.45, hi:.7}, e:"🌱", st:"DRYING"},
+  ready:{lab:"딱 좋아요", sub:"겉이 단단해서 눌러도 자국이 거의 안 남아요. 아직 차갑고 색이 진해요. 깎으면 리본처럼 길게 나와요.", kind:"g", r:{lo:.1, mid:.35, hi:.6}, e:"✨", st:"READY"},
+  firm:{lab:"조금 단단해요", sub:"색이 밝아지기 시작하고 손톱 자국도 잘 안 나요. 깎으면 부스러기가 짧게 끊겨요.", kind:"g", r:{lo:.7, mid:.82, hi:.95}, e:"🚨", st:"URGENT"},
+  over:{lab:"너무 말랐어요", sub:"색이 하얗게 밝고 차갑지 않아요. 깎으면 가루만 나와요.", terminal:true, e:"🪨", st:"OVERDRIED"}
 };
 const ST = {
   WET:{r:0, e:"💧", msg:"아직 너무 축축해요", lab:"과습"},
@@ -736,6 +736,38 @@ function signIn(u, keep){
 }
 /* One-time corrections the user reported in chat. Each runs once per user, only touches matching pots, and skips if similar records already exist. */
 function applyDataFixes(){
+  return [fix20261025(), fix20261028()].filter(Boolean).join(" · ");
+}
+/* 10/28: two EXP cups formed ~21:27 were stamped "습함" but the shelf read 42% · 17.8°C (no reclaim clay nearby). */
+function fix20261028(){
+  const key = "claygotchi.fix.20261028." + USER.id;
+  if(lsGet(key, false)) return "";
+  const T = s => new Date(s + "+09:00").getTime();
+  const from = T("2026-10-28T21:15:00"), to = T("2026-10-28T21:45:00"), read = T("2026-10-28T22:48:00"), after = T("2026-10-28T22:00:00");
+  const reading = {rh:42, temp:17.8};
+  const cups = POTS.filter(p => p.kind === "cup" && p.formedAt >= from && p.formedAt <= to);
+  if(!cups.length) return "";
+  let n = 0;
+  for(const p of cups){
+    let ch = false;
+    for(const e of p.events) if(e.type === "env" && e.at >= from && e.at <= to && e.env !== "dry"){ e.env = "dry"; e.rh = reading.rh; e.temp = reading.temp; ch = true; }
+    if(!p.events.some(e => e.type === "env" && e.at >= from && e.at <= to)){ p.events.push({id:uid(), type:"env", at:p.formedAt, env:"dry", ...reading}); ch = true; }
+    if(p.lab && p.exp === "EXP-006"){ p.exp = "EXP-007"; ch = true; }
+    if(ch){ p.updatedAt = Date.now(); n++; }
+  }
+  const cur = getEnvReading();
+  if(!(cur && cur.at >= after)){
+    lsSet(envKey(USER.id), "dry"); lsSet(envReadKey(USER.id), {...reading, at:read});
+    for(const p of POTS){
+      if(!isDrying(p) || cups.includes(p)) continue;
+      if(p.events.some(e => e.type === "env" && e.at >= after)) continue;
+      p.events.push({id:uid(), type:"env", at:read, env:"dry", ...reading}); p.updatedAt = Date.now();
+    }
+  }
+  lsSet(key, true); lsSet(potsKey(USER.id), POTS);
+  return n ? `📝 10/28 컵 ${n}개: 작업실 공기를 건조(42% · 17.8°C)로 고치고 EXP-007로 바꿨어요` : "";
+}
+function fix20261025(){
   const key = "claygotchi.fix.20261025." + USER.id;
   if(lsGet(key, false)) return "";
   const satMove = new Date("2026-10-24T13:55:00+09:00").getTime(), sunCheck = new Date("2026-10-25T13:55:00+09:00").getTime();
